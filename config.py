@@ -4,6 +4,7 @@ import os
 DEBUG = True
 
 # 数据库连接 URI 构建
+# 仅当外部环境变量显式设置时才使用 MySQL
 if os.environ.get("MYSQL_ADDRESS") or os.environ.get("MYSQL_USERNAME"):
     # 使用 MySQL (支持微信云托管 MySQL)
     username = os.environ.get("MYSQL_USERNAME", 'root')
