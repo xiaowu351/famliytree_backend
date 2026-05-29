@@ -176,46 +176,64 @@ def has_parent_cycle(member_id, parent_id):
         current_id = parent.parent_id
     return False
 
+
+def clear_spouse_links(member_id):
+    spouses = Member.query.filter_by(spouse_id=member_id).all()
+    for spouse in spouses:
+        spouse.spouse_id = ''
+        spouse.is_spouse = False
+
+
+def sync_spouse_link(member_id, spouse_id):
+    if not spouse_id:
+        return
+    spouse = Member.query.get(spouse_id)
+    if not spouse:
+        return
+    spouse.spouse_id = member_id
+    spouse.is_spouse = True
+
+
 def validate_member_relation(data, member_id=None):
     tree_id = data.get('tree_id')
     parent_id = data.get('parent_id') or ''
     spouse_id = data.get('spouse_id') or ''
     is_spouse = bool(data.get('is_spouse', False))
 
+    if not tree_id:
+        return '保存失败：缺少家谱ID。'
+
+    if not Tree.query.get(tree_id):
+        return '保存失败：所属家谱不存在。'
+
     if member_id and parent_id == member_id:
-        return '不能把自己设为自己的父亲或上级'
+        return '保存失败：不能将自己设置为自己的父亲或上级。'
 
     if member_id and spouse_id == member_id:
-        return '不能把自己设为自己的配偶'
+        return '保存失败：不能将自己设置为自己的配偶。'
 
     if parent_id and spouse_id and parent_id == spouse_id:
-        return '配偶不能同时作为父亲或上级'
+        return '保存失败：配偶不能同时作为父亲或上级。'
 
     if parent_id:
         parent = Member.query.get(parent_id)
         if not parent:
-            return '父亲或上级不存在'
-        if tree_id and parent.tree_id != tree_id:
-            return '父亲或上级不属于当前家谱'
+            return '保存失败：父亲或上级不存在。'
+        if parent.tree_id != tree_id:
+            return '保存失败：父亲或上级不属于当前家谱。'
         if member_id and parent.is_spouse and parent.spouse_id == member_id:
-            return '不能把自己的配偶设为父亲或上级'
+            return '保存失败：不能把自己的配偶设为父亲或上级。'
         if member_id and has_parent_cycle(member_id, parent_id):
-            return '不能形成父子循环关系'
+            return '保存失败：不能将自己的子嗣（或后代）设置为自己的父母。'
 
     if spouse_id:
         spouse_owner = Member.query.get(spouse_id)
         if not spouse_owner:
-            return '配偶关联的族员不存在'
-        if tree_id and spouse_owner.tree_id != tree_id:
-            return '配偶关联的族员不属于当前家谱'
-
-    if is_spouse and spouse_id:
-        spouse_name = (data.get('name') or '').strip()
-        query = Member.query.filter_by(is_spouse=True, spouse_id=spouse_id, name=spouse_name)
-        if member_id:
-            query = query.filter(Member.id != member_id)
-        if query.first():
-            return '该族员已存在同名配偶，请勿重复添加'
+            return '保存失败：配偶关联的族员不存在。'
+        if spouse_owner.tree_id != tree_id:
+            return '保存失败：配偶关联的族员不属于当前家谱。'
+        if spouse_owner.spouse_id and spouse_owner.spouse_id != member_id:
+            return '保存失败：该配偶已绑定其他人，请先解除当前配偶关系。'
 
     return None
 
@@ -341,12 +359,15 @@ def delete_tree(tree_id):
     tree = Tree.query.get(tree_id)
     if not tree:
         return jsonify({'code': -1, 'message': 'Tree not found'})
-    
-    # 删除关联成员
-    Member.query.filter_by(tree_id=tree_id).delete()
-    # 删除家谱本身
-    db.session.delete(tree)
-    db.session.commit()
+
+    try:
+        with db.session.begin():
+            Member.query.filter_by(tree_id=tree_id).delete(synchronize_session=False)
+            db.session.delete(tree)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'code': -1, 'message': f'删除失败：{str(e)}'})
+
     return jsonify({'code': 0, 'message': 'Tree deleted successfully'})
 
 # ----------------- 成员 API -----------------
@@ -406,8 +427,14 @@ def create_member():
         education_status=data.get('education_status') or '毕业',
         adoption_type=data.get('adoption_type') or '生'
     )
-    db.session.add(member)
-    db.session.commit()
+    try:
+        db.session.add(member)
+        if member.spouse_id:
+            sync_spouse_link(member.id, member.spouse_id)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'code': -1, 'message': f'保存失败：{str(e)}'})
     return jsonify({'code': 0, 'data': member.to_dict()})
 
 # 获取成员详情
@@ -432,7 +459,12 @@ def update_member(member_id):
     if validation_error:
         return jsonify({'code': -1, 'message': validation_error})
 
-    # 按需更新属性
+    old_spouse_id = member.spouse_id or ''
+    new_spouse_id = data.get('spouse_id') if 'spouse_id' in data else old_spouse_id
+    if new_spouse_id is None:
+        new_spouse_id = ''
+    new_spouse_id = new_spouse_id or ''
+
     if 'name' in data:
         member.name = data.get('name')
     if 'gender' in data:
@@ -442,7 +474,7 @@ def update_member(member_id):
     if 'parent_id' in data:
         member.parent_id = data.get('parent_id') or ''
     if 'spouse_id' in data:
-        member.spouse_id = data.get('spouse_id') or ''
+        member.spouse_id = new_spouse_id
     if 'desc' in data:
         member.desc = data.get('desc') or ''
     if 'generation' in data:
@@ -490,7 +522,24 @@ def update_member(member_id):
     if 'adoption_type' in data:
         member.adoption_type = data.get('adoption_type') or '生'
 
-    db.session.commit()
+    try:
+        if 'spouse_id' in data and old_spouse_id and old_spouse_id != new_spouse_id:
+            old_spouse = Member.query.get(old_spouse_id)
+            if old_spouse and old_spouse.spouse_id == member.id:
+                old_spouse.spouse_id = ''
+                old_spouse.is_spouse = False
+
+        if 'spouse_id' in data and new_spouse_id and old_spouse_id != new_spouse_id:
+            sync_spouse_link(member.id, new_spouse_id)
+
+        if not new_spouse_id and old_spouse_id:
+            clear_spouse_links(member.id)
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'code': -1, 'message': f'保存失败：{str(e)}'})
+
     return jsonify({'code': 0, 'message': 'Member updated successfully'})
 
 # 删除成员
@@ -499,9 +548,28 @@ def delete_member(member_id):
     member = Member.query.get(member_id)
     if not member:
         return jsonify({'code': -1, 'message': 'Member not found'})
-    
-    db.session.delete(member)
-    db.session.commit()
+
+    child_exists = Member.query.filter_by(parent_id=member_id).first()
+    if child_exists:
+        return jsonify({
+            'code': -1,
+            'message': '该成员下有子嗣，无法直接删除。请先进入其子女的编辑页面，将父亲/母亲关系修改或置空后，再尝试删除。'
+        })
+
+    try:
+        if member.spouse_id:
+            spouse = Member.query.get(member.spouse_id)
+            if spouse and spouse.spouse_id == member.id:
+                spouse.spouse_id = ''
+                spouse.is_spouse = False
+
+        clear_spouse_links(member.id)
+        db.session.delete(member)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'code': -1, 'message': f'删除失败：{str(e)}'})
+
     return jsonify({'code': 0, 'message': 'Member deleted successfully'})
 
 if __name__ == '__main__':
