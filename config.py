@@ -3,6 +3,8 @@ import os
 # 是否开启debug模式
 DEBUG = True
 
+os.environ["MYSQL_ADDRESS"]="sh-cynosdbmysql-grp-b346qyhc.sql.tencentcdb.com:20343"
+
 # 数据库连接 URI 构建
 # 仅当外部环境变量显式设置时才使用 MySQL
 if os.environ.get("MYSQL_ADDRESS") or os.environ.get("MYSQL_USERNAME"):
