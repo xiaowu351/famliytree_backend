@@ -4,6 +4,7 @@ from datetime import datetime
 from flask import jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 
+from wxcloudrun import db
 from wxcloudrun.app import (
     app,
     AVATAR_UPLOAD_DIR,
@@ -35,40 +36,13 @@ def _allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_AVATAR_EXTENSIONS
 
 
-@app.route('/counter/<int:counter_id>', methods=['GET'])
-def get_counter(counter_id):
-    counter = query_counterbyid(counter_id)
-    if not counter:
-        return make_fail_response('指定计数器未找到。', 404)
-    return make_success_response({'id': counter.id, 'count': counter.count}, '查询成功。')
-
-
-@app.route('/counter', methods=['POST'])
-def create_counter():
+@app.route('/api/count', methods=['POST'])
+def count():
     counter = insert_counter()
     return make_success_response({'id': counter.id, 'count': counter.count}, '计数器创建成功。', 201)
 
 
-@app.route('/counter/<int:counter_id>', methods=['PUT'])
-def update_counter(counter_id):
-    payload = request.get_json(silent=True) or {}
-    count = payload.get('count')
-    if count is None or not isinstance(count, int):
-        return make_fail_response('请求参数 count 必须为整数。', 400)
-    counter = update_counterbyid(counter_id, count)
-    if not counter:
-        return make_fail_response('指定计数器未找到。', 404)
-    return make_success_response({'id': counter.id, 'count': counter.count}, '更新成功。')
-
-
-@app.route('/counter/<int:counter_id>', methods=['DELETE'])
-def delete_counter(counter_id):
-    if not delete_counterbyid(counter_id):
-        return make_fail_response('指定计数器未找到。', 404)
-    return make_success_response({}, '计数器删除成功。')
-
-
-@app.route('/upload/avatar', methods=['POST'])
+@app.route('/api/upload/avatar', methods=['POST'])
 def upload_avatar():
     avatar_file = request.files.get('avatar')
     if not avatar_file or avatar_file.filename == '':
@@ -94,7 +68,26 @@ def serve_avatar(filename):
     return send_from_directory(AVATAR_UPLOAD_DIR, filename)
 
 
-@app.route('/trees/<tree_id>', methods=['GET'])
+@app.route('/api/trees', methods=['GET'])
+def get_trees():
+    from sqlalchemy import func
+    results = db.session.query(
+        Tree,
+        func.count(Member.id).label('member_count')
+    ).outerjoin(Member, Tree.id == Member.tree_id)\
+     .group_by(Tree.id)\
+     .order_by(Tree.update_time.desc())\
+     .all()
+    
+    tree_list = []
+    for tree, member_count in results:
+        t_dict = tree.to_dict()
+        t_dict['member_count'] = member_count
+        tree_list.append(t_dict)
+    return make_success_response(tree_list, '查询成功。')
+
+
+@app.route('/api/trees/<tree_id>', methods=['GET'])
 def get_tree(tree_id):
     tree = get_tree_by_id(tree_id)
     if not tree:
@@ -103,7 +96,7 @@ def get_tree(tree_id):
     return make_success_response({'tree': tree.to_dict(), 'members': [member.to_dict() for member in members]}, '查询成功。')
 
 
-@app.route('/trees', methods=['POST'])
+@app.route('/api/trees', methods=['POST'])
 def create_tree():
     payload = request.get_json(silent=True) or {}
     surname = payload.get('surname')
@@ -122,13 +115,12 @@ def create_tree():
         create_time=now,
         update_time=now,
     )
-    from wxcloudrun import db
     db.session.add(tree)
     db.session.commit()
     return make_success_response({'id': tree.id}, '家谱创建成功。', 201)
 
 
-@app.route('/trees/<tree_id>', methods=['PUT'])
+@app.route('/api/trees/<tree_id>', methods=['PUT'])
 def update_tree(tree_id):
     payload = request.get_json(silent=True) or {}
     tree = get_tree_by_id(tree_id)
@@ -140,12 +132,11 @@ def update_tree(tree_id):
     tree.hall_name = payload.get('hall_name', tree.hall_name)
     tree.region = payload.get('region', tree.region)
     tree.update_time = datetime.now().isoformat()
-    from wxcloudrun import db
     db.session.commit()
     return make_success_response(tree.to_dict(), '家谱更新成功。')
 
 
-@app.route('/trees/<tree_id>', methods=['DELETE'])
+@app.route('/api/trees/<tree_id>', methods=['DELETE'])
 def delete_tree(tree_id):
     success = delete_tree_with_members(tree_id)
     if not success:
@@ -153,8 +144,11 @@ def delete_tree(tree_id):
     return make_success_response({}, '家谱已永久删除，旗下所有族员数据已成功清空。')
 
 
-@app.route('/trees/<tree_id>/members', methods=['GET'])
-def list_members(tree_id):
+@app.route('/api/members', methods=['GET'])
+def list_members():
+    tree_id = request.args.get('tree_id', '')
+    if not tree_id:
+        return make_fail_response('tree_id 为必填查询参数。', 400)
     tree = get_tree_by_id(tree_id)
     if not tree:
         return make_fail_response('未找到指定家谱。', 404)
@@ -162,13 +156,17 @@ def list_members(tree_id):
     return make_success_response({'members': [member.to_dict() for member in members]}, '查询成功。')
 
 
-@app.route('/trees/<tree_id>/members', methods=['POST'])
-def create_member(tree_id):
+@app.route('/api/members', methods=['POST'])
+def create_member():
+    payload = request.get_json(silent=True) or {}
+    tree_id = payload.get('tree_id', '')
+    if not tree_id:
+        return make_fail_response('tree_id 为必填字段。', 400)
+    
     tree = get_tree_by_id(tree_id)
     if not tree:
         return make_fail_response('未找到指定家谱。', 404)
 
-    payload = request.get_json(silent=True) or {}
     name = payload.get('name')
     gender = payload.get('gender')
     if not name or not gender:
@@ -225,27 +223,27 @@ def create_member(tree_id):
             sync_spouse_link(member, spouse)
         else:
             return make_fail_response('指定配偶不存在。', 400)
-    from wxcloudrun import db
     db.session.add(member)
     db.session.commit()
     return make_success_response({'member': member.to_dict()}, '族员创建成功。', 201)
 
 
-@app.route('/trees/<tree_id>/members/<member_id>', methods=['GET'])
-def get_member(tree_id, member_id):
+@app.route('/api/members/<member_id>', methods=['GET'])
+def get_member(member_id):
     member = get_member_by_id(member_id)
-    if not member or member.tree_id != tree_id:
+    if not member:
         return make_fail_response('未找到指定族员。', 404)
     return make_success_response({'member': member.to_dict()}, '查询成功。')
 
 
-@app.route('/trees/<tree_id>/members/<member_id>', methods=['PUT'])
-def update_member(tree_id, member_id):
+@app.route('/api/members/<member_id>', methods=['PUT'])
+def update_member(member_id):
     member = get_member_by_id(member_id)
-    if not member or member.tree_id != tree_id:
+    if not member:
         return make_fail_response('未找到指定族员。', 404)
 
     payload = request.get_json(silent=True) or {}
+    tree_id = member.tree_id
     parent_id = payload.get('parent_id', member.parent_id)
     spouse_id = payload.get('spouse_id', member.spouse_id)
     ok, message = validate_member_relation(tree_id, parent_id, spouse_id, current_member_id=member_id)
@@ -293,15 +291,14 @@ def update_member(tree_id, member_id):
     member.adoption_type = payload.get('adoption_type', member.adoption_type)
 
     member.desc = payload.get('desc', member.desc)
-    from wxcloudrun import db
     db.session.commit()
     return make_success_response({'member': member.to_dict()}, '族员信息更新成功。')
 
 
-@app.route('/trees/<tree_id>/members/<member_id>', methods=['DELETE'])
-def delete_member(tree_id, member_id):
+@app.route('/api/members/<member_id>', methods=['DELETE'])
+def delete_member(member_id):
     member = get_member_by_id(member_id)
-    if not member or member.tree_id != tree_id:
+    if not member:
         return make_fail_response('未找到指定族员。', 404)
 
     deleted, message = delete_member_safe(member_id)

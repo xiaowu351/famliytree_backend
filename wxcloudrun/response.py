@@ -1,19 +1,17 @@
 from flask import jsonify
 
 
-def make_success_response(data=None, message='success', code=200):
+def make_success_response(data=None, message='success', http_code=200):
     return jsonify({
-        'status': 'success',
-        'code': code,
+        'code': 0,
         'message': message,
         'data': data or {}
-    }), code
+    }), http_code
 
 
-def make_fail_response(message='fail', code=400, data=None):
+def make_fail_response(message='fail', http_code=400, data=None):
     return jsonify({
-        'status': 'fail',
-        'code': code,
+        'code': -1,
         'message': message,
         'data': data or {}
-    }), code
+    }), http_code
