@@ -3,6 +3,7 @@ import sys
 
 from flask import Flask
 from flask_cors import CORS
+from flask_migrate import Migrate
 
 from wxcloudrun import db
 
@@ -15,8 +16,11 @@ import config
 
 app = Flask(__name__)
 app.config.from_object(config)
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'bjyp_secret_key_2026')
 CORS(app)
 db.init_app(app)
+
+migrate = Migrate(app,db)
 
 UPLOAD_ROOT = os.path.join(_this_dir, 'uploads')
 AVATAR_UPLOAD_DIR = os.path.join(UPLOAD_ROOT, 'avatars')
@@ -41,7 +45,7 @@ def get_file_size(file_storage):
 
 
 with app.app_context():
-    from wxcloudrun.model import Counters
+    from wxcloudrun.model import Counters, User, Tree, Member, TreeCollaborator, CollaboratorInvite
 
     try:
         db.create_all()

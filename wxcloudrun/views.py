@@ -1,7 +1,7 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from flask import jsonify, request, send_from_directory
+from flask import jsonify, request, send_from_directory, g
 from werkzeug.utils import secure_filename
 
 from wxcloudrun import db
@@ -28,12 +28,60 @@ from wxcloudrun.dao import (
     sync_spouse_link,
     validate_member_relation,
 )
-from wxcloudrun.model import Counters, Member, Tree
+from wxcloudrun.model import Counters, Member, Tree, User, TreeCollaborator, CollaboratorInvite
 from wxcloudrun.response import make_fail_response, make_success_response
-
+from wxcloudrun.auth import generate_token, login_required, permission_check, get_current_user
+import uuid
+import requests
 
 def _allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_AVATAR_EXTENSIONS
+
+
+@app.route('/api/auth/login', methods=['POST'])
+def wx_login():
+    payload = request.get_json(silent=True) or {}
+    code = payload.get('code')
+    if not code:
+        return make_fail_response('缺少 code 参数。', 400)
+
+    # 1. 微信静默登录或本地万能测试
+    # 为方便测试，如果 code 是 test_xxx，我们不请求微信后台，直接以该 code 作为 openid 处理
+    if code.startswith('test_'):
+        openid = f"openid_{code}"
+    else:
+        # 正式微信登录
+        # 微信小程序 appid 和 secret 由环境变量获取，或者在未配置时降级到测试 openid 逻辑
+        appid = os.environ.get('WX_APPID')
+        secret = os.environ.get('WX_SECRET')
+        
+        if not appid or not secret:
+            # 降级模式：没有配置云开发环境变量，自动降级为本地测试模式
+            print("Warning: WX_APPID 或 WX_SECRET 未配置，自动降级为测试 openid 分配。")
+            openid = f"openid_mock_{code}"
+        else:
+            wx_url = f"https://api.weixin.qq.com/sns/jscode2session?appid={appid}&secret={secret}&js_code={code}&grant_type=authorization_code"
+            try:
+                res = requests.get(wx_url, timeout=5).json()
+                openid = res.get('openid')
+                if not openid:
+                    return make_fail_response(res.get('errmsg', '微信登录失败'), 400)
+            except Exception as e:
+                return make_fail_response(f'请求微信接口失败: {str(e)}', 500)
+
+    # 2. 查库或插入用户
+    user = User.query.filter_by(openid=openid).first()
+    if not user:
+        user = User(openid=openid, nickname=payload.get('nickname', '微信用户'), avatar_url=payload.get('avatar_url', ''))
+        db.session.add(user)
+        db.session.commit()
+
+    # 3. 生成 JWT Token
+    token = generate_token(user.id, openid)
+    return make_success_response({
+        'token': token,
+        'user': user.to_dict()
+    }, '登录成功')
 
 
 @app.route('/api/count', methods=['POST'])
@@ -93,10 +141,26 @@ def get_tree(tree_id):
     if not tree:
         return make_fail_response('未找到指定家谱。', 404)
     members = dao_get_members(tree_id)
-    return make_success_response({'tree': tree.to_dict(), 'members': [member.to_dict() for member in members]}, '查询成功。')
+    
+    # 动态确定当前用户的权限角色
+    role = 'guest'
+    current_user = get_current_user()
+    if current_user:
+        if tree.creator_id == current_user.id:
+            role = 'owner'
+        else:
+            collab = TreeCollaborator.query.filter_by(tree_id=tree_id, user_id=current_user.id).first()
+            if collab:
+                role = 'editor'
+
+    tree_data = tree.to_dict()
+    tree_data['role'] = role
+
+    return make_success_response({'tree': tree_data, 'members': [member.to_dict() for member in members]}, '查询成功。')
 
 
 @app.route('/api/trees', methods=['POST'])
+@login_required
 def create_tree():
     payload = request.get_json(silent=True) or {}
     surname = payload.get('surname')
@@ -114,6 +178,7 @@ def create_tree():
         region=payload.get('region', ''),
         create_time=now,
         update_time=now,
+        creator_id=g.current_user.id
     )
     db.session.add(tree)
     db.session.commit()
@@ -121,6 +186,8 @@ def create_tree():
 
 
 @app.route('/api/trees/<tree_id>', methods=['PUT'])
+@login_required
+@permission_check(action='write')
 def update_tree(tree_id):
     payload = request.get_json(silent=True) or {}
     tree = get_tree_by_id(tree_id)
@@ -137,6 +204,8 @@ def update_tree(tree_id):
 
 
 @app.route('/api/trees/<tree_id>', methods=['DELETE'])
+@login_required
+@permission_check(action='delete')
 def delete_tree(tree_id):
     success = delete_tree_with_members(tree_id)
     if not success:
@@ -157,6 +226,8 @@ def list_members():
 
 
 @app.route('/api/members', methods=['POST'])
+@login_required
+@permission_check(action='write')
 def create_member():
     payload = request.get_json(silent=True) or {}
     tree_id = payload.get('tree_id', '')
@@ -237,6 +308,8 @@ def get_member(member_id):
 
 
 @app.route('/api/members/<member_id>', methods=['PUT'])
+@login_required
+@permission_check(action='write')
 def update_member(member_id):
     member = get_member_by_id(member_id)
     if not member:
@@ -296,6 +369,8 @@ def update_member(member_id):
 
 
 @app.route('/api/members/<member_id>', methods=['DELETE'])
+@login_required
+@permission_check(action='write')
 def delete_member(member_id):
     member = get_member_by_id(member_id)
     if not member:
@@ -305,3 +380,71 @@ def delete_member(member_id):
     if not deleted:
         return make_fail_response(message, 400)
     return make_success_response({'id': member_id}, '族员删除成功。')
+
+
+@app.route('/api/trees/<tree_id>/invite', methods=['POST'])
+@login_required
+def create_invite(tree_id):
+    # 只有家谱所有者 (Owner) 才能生成协作邀请
+    tree = get_tree_by_id(tree_id)
+    if not tree:
+        return make_fail_response('家谱不存在。', 404)
+    if tree.creator_id != g.current_user.id:
+        return make_fail_response('只有谱主才能生成协作邀请链接。', 403)
+
+    invite_code = str(uuid.uuid4())
+    # 设置 7 天有效期
+    expire_time = datetime.now() + timedelta(days=7)
+    
+    invite = CollaboratorInvite(
+        tree_id=tree_id,
+        invite_code=invite_code,
+        is_used=False,
+        expire_time=expire_time
+    )
+    db.session.add(invite)
+    db.session.commit()
+
+    return make_success_response({'invite_code': invite_code}, '邀请码创建成功')
+
+
+@app.route('/api/trees/accept_invite', methods=['POST'])
+@login_required
+def accept_invite():
+    payload = request.get_json(silent=True) or {}
+    invite_code = payload.get('invite_code')
+    if not invite_code:
+        return make_fail_response('缺少 invite_code 参数。', 400)
+
+    invite = CollaboratorInvite.query.filter_by(invite_code=invite_code).first()
+    if not invite:
+        return make_fail_response('该协作邀请链接不存在。', 404)
+    
+    if invite.is_used:
+        return make_fail_response('该邀请链接已被使用或已被接受。', 400)
+    
+    if invite.expire_time < datetime.now():
+        return make_fail_response('该邀请链接已失效。', 400)
+
+    tree = get_tree_by_id(invite.tree_id)
+    if not tree:
+        return make_fail_response('对应家谱已不存在。', 404)
+
+    # 1. 检查是否是创建者
+    if tree.creator_id == g.current_user.id:
+        return make_success_response({}, '您是该家谱的创建者，无需再次绑定。')
+
+    # 2. 检查是否已经是协作修谱人
+    collab = TreeCollaborator.query.filter_by(tree_id=invite.tree_id, user_id=g.current_user.id).first()
+    if collab:
+        return make_success_response({}, '您已是该家谱的协作修谱人，无需重复接受。')
+
+    # 3. 写入关联表
+    new_collab = TreeCollaborator(tree_id=invite.tree_id, user_id=g.current_user.id)
+    db.session.add(new_collab)
+    
+    # 微信云开发可以允许多人使用一个邀请，或者标记已被使用，此处标记为已被使用
+    invite.is_used = True
+    db.session.commit()
+
+    return make_success_response({}, '接受邀请成功，已成为本家谱协作修谱人！')

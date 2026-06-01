@@ -12,6 +12,7 @@ class Tree(db.Model):
     region = db.Column(db.String(255), nullable=True)
     create_time = db.Column(db.String(64), nullable=False)
     update_time = db.Column(db.String(64), nullable=False)
+    creator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     def to_dict(self):
         return {
@@ -22,7 +23,42 @@ class Tree(db.Model):
             'region': self.region or '',
             'create_time': self.create_time,
             'update_time': self.update_time,
+            'creator_id': self.creator_id,
         }
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    openid = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    nickname = db.Column(db.String(128), nullable=True)
+    avatar_url = db.Column(db.String(512), nullable=True)
+    create_time = db.Column(db.DateTime, default=datetime.now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'openid': self.openid,
+            'nickname': self.nickname or '微信用户',
+            'avatar_url': self.avatar_url or '',
+        }
+
+
+class TreeCollaborator(db.Model):
+    __tablename__ = 'tree_collaborators'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tree_id = db.Column(db.String(64), db.ForeignKey('trees.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    create_time = db.Column(db.DateTime, default=datetime.now)
+
+
+class CollaboratorInvite(db.Model):
+    __tablename__ = 'collaborator_invites'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tree_id = db.Column(db.String(64), db.ForeignKey('trees.id'), nullable=False)
+    invite_code = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    is_used = db.Column(db.Boolean, default=False, nullable=False)
+    expire_time = db.Column(db.DateTime, nullable=False)
 
 
 class Member(db.Model):
