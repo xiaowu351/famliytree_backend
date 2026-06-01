@@ -4,6 +4,7 @@ import sys
 from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate
+from sqlalchemy import inspect, text
 
 from wxcloudrun import db
 
@@ -44,11 +45,24 @@ def get_file_size(file_storage):
     return size
 
 
+def ensure_permission_schema():
+    inspector = inspect(db.engine)
+    table_names = inspector.get_table_names()
+    if 'trees' not in table_names:
+        return
+
+    tree_columns = {column['name'] for column in inspector.get_columns('trees')}
+    if 'creator_id' not in tree_columns:
+        db.session.execute(text('ALTER TABLE trees ADD COLUMN creator_id INTEGER'))
+        db.session.commit()
+
+
 with app.app_context():
     from wxcloudrun.model import Counters, User, Tree, Member, TreeCollaborator, CollaboratorInvite
 
     try:
         db.create_all()
+        ensure_permission_schema()
         if not Counters.query.get(1):
             counter = Counters(id=1, count=0)
             db.session.add(counter)

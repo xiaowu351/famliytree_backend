@@ -45,9 +45,12 @@ def wx_login():
     if not code:
         return make_fail_response('缺少 code 参数。', 400)
 
-    # 1. 微信静默登录或本地万能测试
+    # 1. 微信静默登录、云托管 openid 或本地万能测试
     # 为方便测试，如果 code 是 test_xxx，我们不请求微信后台，直接以该 code 作为 openid 处理
-    if code.startswith('test_'):
+    cloud_openid = request.headers.get('X-WX-OPENID') or request.headers.get('x-wx-openid')
+    if cloud_openid:
+        openid = cloud_openid
+    elif code.startswith('test_'):
         openid = f"openid_{code}"
     else:
         # 正式微信登录
@@ -58,7 +61,7 @@ def wx_login():
         if not appid or not secret:
             # 降级模式：没有配置云开发环境变量，自动降级为本地测试模式
             print("Warning: WX_APPID 或 WX_SECRET 未配置，自动降级为测试 openid 分配。")
-            openid = f"openid_mock_{code}"
+            openid = payload.get('dev_openid') or f"openid_mock_{code}"
         else:
             wx_url = f"https://api.weixin.qq.com/sns/jscode2session?appid={appid}&secret={secret}&js_code={code}&grant_type=authorization_code"
             try:
@@ -74,6 +77,14 @@ def wx_login():
     if not user:
         user = User(openid=openid, nickname=payload.get('nickname', '微信用户'), avatar_url=payload.get('avatar_url', ''))
         db.session.add(user)
+        db.session.commit()
+    else:
+        nickname = payload.get('nickname')
+        avatar_url = payload.get('avatar_url')
+        if nickname:
+            user.nickname = nickname
+        if avatar_url:
+            user.avatar_url = avatar_url
         db.session.commit()
 
     # 3. 生成 JWT Token

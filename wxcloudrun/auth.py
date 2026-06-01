@@ -14,7 +14,7 @@ def generate_token(user_id, openid):
     payload = {
         'exp': datetime.utcnow() + timedelta(days=30),
         'iat': datetime.utcnow(),
-        'sub': user_id,
+        'sub': str(user_id),
         'openid': openid
     }
     return jwt.encode(payload, secret, algorithm='HS256')
@@ -42,7 +42,10 @@ def get_current_user():
         token = auth_header[7:]
         payload = decode_token(token)
         if payload:
-            user_id = payload.get('sub')
+            try:
+                user_id = int(payload.get('sub'))
+            except (TypeError, ValueError):
+                return None
             return User.query.get(user_id)
     return None
 
@@ -61,7 +64,10 @@ def login_required(f):
         if not payload:
             return make_fail_response('登录状态已失效，请重新登录。', 401)
         
-        user_id = payload.get('sub')
+        try:
+            user_id = int(payload.get('sub'))
+        except (TypeError, ValueError):
+            return make_fail_response('登录状态已失效，请重新登录。', 401)
         user = User.query.get(user_id)
         if not user:
             return make_fail_response('用户不存在。', 401)

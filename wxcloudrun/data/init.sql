@@ -4,7 +4,19 @@
 START TRANSACTION;
 
 DROP TABLE IF EXISTS `members`;
+DROP TABLE IF EXISTS `tree_collaborators`;
+DROP TABLE IF EXISTS `collaborator_invites`;
 DROP TABLE IF EXISTS `trees`;
+DROP TABLE IF EXISTS `users`;
+
+CREATE TABLE IF NOT EXISTS `users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `openid` VARCHAR(128) NOT NULL UNIQUE,
+    `nickname` VARCHAR(128) DEFAULT NULL,
+    `avatar_url` VARCHAR(512) DEFAULT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_users_openid` (`openid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `trees` (
     `id` VARCHAR(64) PRIMARY KEY,
@@ -13,7 +25,28 @@ CREATE TABLE IF NOT EXISTS `trees` (
     `hall_name` VARCHAR(128) DEFAULT NULL,
     `region` VARCHAR(255) DEFAULT NULL,
     `create_time` VARCHAR(64) NOT NULL,
-    `update_time` VARCHAR(64) NOT NULL
+    `update_time` VARCHAR(64) NOT NULL,
+    `creator_id` INT DEFAULT NULL,
+    FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `tree_collaborators` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `tree_id` VARCHAR(64) NOT NULL,
+    `user_id` INT NOT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`tree_id`) REFERENCES `trees`(`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `collaborator_invites` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `tree_id` VARCHAR(64) NOT NULL,
+    `invite_code` VARCHAR(128) NOT NULL UNIQUE,
+    `is_used` TINYINT(1) NOT NULL DEFAULT 0,
+    `expire_time` DATETIME NOT NULL,
+    INDEX `idx_invite_code` (`invite_code`),
+    FOREIGN KEY (`tree_id`) REFERENCES `trees`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `members` (
@@ -50,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `members` (
     `current_residence` VARCHAR(255) DEFAULT '',
     FOREIGN KEY (`tree_id`) REFERENCES `trees`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-INSERT INTO `trees` (`id`, `surname`, `title`, `hall_name`, `region`, `create_time`, `update_time`)
+INSERT INTO `trees` (`id`, `surname`, `title`, `hall_name`, `region`, `create_time`, `update_time`, `creator_id`)
 VALUES (
     'tree_zhao_001',
     '赵',
@@ -58,7 +91,8 @@ VALUES (
     '天水堂',
     '浙江省杭州市',
     DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),
-    DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s')
+    DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),
+    NULL
 );
 
 INSERT INTO `members` (`id`,`tree_id`,`name`,`gender`,`is_alive`,`parent_id`,`spouse_id`,`desc`,`create_time`,`generation`,`avatar_url`,`surname`,`rank_type`,`marital_status`,`birth_order`,`alias_name`,`other_name`,`style_name`,`pseudonym`,`birth_date`,`spouse_father`,`education_school`,`education_major`,`education_degree`,`occupation`,`is_spouse`,`spouse_type`,`education_status`,`adoption_type`) VALUES ('zhao_01','tree_zhao_001','赵德明','M',1,'','zhao_01_s1','始祖','2026-05-29T10:37:05',1,'','赵','始祖','','','','','','','1930-01-01','','','','','',0,'配','毕业','生');
