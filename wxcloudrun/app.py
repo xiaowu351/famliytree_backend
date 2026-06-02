@@ -5,6 +5,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate
 from sqlalchemy import inspect, text
+from dotenv import load_dotenv
 
 from wxcloudrun import db
 
@@ -14,6 +15,8 @@ if _backend_dir not in sys.path:
     sys.path.insert(0, _backend_dir)
 
 import config
+if config.DEBUG:
+    load_dotenv(os.path.join(_this_dir, '.env'))
 
 app = Flask(__name__)
 app.config.from_object(config)

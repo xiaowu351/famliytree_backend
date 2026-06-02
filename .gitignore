@@ -16,3 +16,4 @@ project.private.config.json
 Thumbs.db
 .idea/
 .vscode/
+.env

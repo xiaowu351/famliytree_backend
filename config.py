@@ -1,16 +1,15 @@
 import os
 
 # 是否开启debug模式
-DEBUG = True
+DEBUG = os.environ.get("DEBUG",True)
 
-os.environ["MYSQL_ADDRESS"]="sh-cynosdbmysql-grp-b346qyhc.sql.tencentcdb.com:20343"
 
 # 数据库连接 URI 构建
 # 仅当外部环境变量显式设置时才使用 MySQL
 if os.environ.get("MYSQL_ADDRESS") or os.environ.get("MYSQL_USERNAME"):
     # 使用 MySQL (支持微信云托管 MySQL)
     username = os.environ.get("MYSQL_USERNAME", 'root')
-    password = os.environ.get("MYSQL_PASSWORD", 'XD7ZTPKg')
+    password = os.environ.get("MYSQL_PASSWORD", '123456')
     db_address = os.environ.get("MYSQL_ADDRESS", '10.1.104.73:3306')
     database = os.environ.get("MYSQL_DATABASE", 'mapping_family')
     SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{username}:{password}@{db_address}/{database}?charset=utf8mb4"

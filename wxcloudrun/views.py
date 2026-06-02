@@ -68,8 +68,10 @@ def wx_login():
                 res = requests.get(wx_url, timeout=5).json()
                 openid = res.get('openid')
                 if not openid:
+                    print("Warning: WX_APPID 或 WX_SECRET 配置不对，微信登录失败。")
                     return make_fail_response(res.get('errmsg', '微信登录失败'), 400)
             except Exception as e:
+                print(f"Warning: 请求微信接口失败: {str(e)}")
                 return make_fail_response(f'请求微信接口失败: {str(e)}', 500)
 
     # 2. 查库或插入用户
