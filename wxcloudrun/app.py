@@ -1,5 +1,7 @@
 import os
+import logging
 import sys
+from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask
 from flask_cors import CORS
@@ -25,6 +27,42 @@ CORS(app)
 db.init_app(app)
 
 migrate = Migrate(app,db)
+
+
+def setup_logger(flask_app):
+    log_dir = os.path.join(_backend_dir, 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+
+    log_file = os.path.join(log_dir, 'app.log')
+    file_handler = TimedRotatingFileHandler(
+        log_file,
+        when='midnight',
+        interval=1,
+        backupCount=30,
+        encoding='utf-8'
+    )
+    file_handler.suffix = "%Y-%m-%d"
+
+    console_handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        '[%(asctime)s] %(levelname)s in %(module)s (Line %(lineno)d): %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    file_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.INFO)
+
+    flask_app.logger.handlers.clear()
+    flask_app.logger.addHandler(file_handler)
+    flask_app.logger.addHandler(console_handler)
+    flask_app.logger.setLevel(logging.INFO)
+    flask_app.logger.propagate = False
+    logging.getLogger('werkzeug').setLevel(logging.INFO)
+
+
+setup_logger(app)
 
 UPLOAD_ROOT = os.path.join(_this_dir, 'uploads')
 AVATAR_UPLOAD_DIR = os.path.join(UPLOAD_ROOT, 'avatars')
@@ -71,6 +109,6 @@ with app.app_context():
             db.session.add(counter)
             db.session.commit()
     except Exception as error:
-        print('Warning: 初始化数据库失败，后续运行可能需要数据库连接。', error)
+        app.logger.warning('初始化数据库失败，后续运行可能需要数据库连接。%s', error)
 
 import wxcloudrun.views  # noqa: F401

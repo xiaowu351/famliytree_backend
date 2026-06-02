@@ -60,18 +60,18 @@ def wx_login():
         
         if not appid or not secret:
             # 降级模式：没有配置云开发环境变量，自动降级为本地测试模式
-            print("Warning: WX_APPID 或 WX_SECRET 未配置，自动降级为测试 openid 分配。")
-            openid = payload.get('dev_openid') or f"openid_mock_{code}"
+                app.logger.warning("WX_APPID 或 WX_SECRET 未配置，自动降级为测试 openid 分配。")
+                openid = payload.get('dev_openid') or f"openid_mock_{code}"
         else:
             wx_url = f"https://api.weixin.qq.com/sns/jscode2session?appid={appid}&secret={secret}&js_code={code}&grant_type=authorization_code"
             try:
                 res = requests.get(wx_url, timeout=5).json()
                 openid = res.get('openid')
                 if not openid:
-                    print("Warning: WX_APPID 或 WX_SECRET 配置不对，微信登录失败。")
+                    app.logger.warning("WX_APPID 或 WX_SECRET 配置不对，微信登录失败。")
                     return make_fail_response(res.get('errmsg', '微信登录失败'), 400)
             except Exception as e:
-                print(f"Warning: 请求微信接口失败: {str(e)}")
+                app.logger.exception("请求微信接口失败")
                 return make_fail_response(f'请求微信接口失败: {str(e)}', 500)
 
     # 2. 查库或插入用户
