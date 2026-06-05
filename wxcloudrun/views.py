@@ -168,6 +168,13 @@ def get_tree(tree_id):
 
     tree_data = tree.to_dict()
     tree_data['role'] = role
+    if tree.creator_id:
+        creator = User.query.get(tree.creator_id)
+        tree_data['creator_name'] = creator.nickname if creator and creator.nickname else '匿名用户'
+        tree_data['creator_avatar'] = creator.avatar_url if creator and creator.avatar_url else ''
+    else:
+        tree_data['creator_name'] = '匿名用户'
+        tree_data['creator_avatar'] = ''
 
     return make_success_response({'tree': tree_data, 'members': [member.to_dict() for member in members]}, '查询成功。')
 
