@@ -96,6 +96,17 @@ def ensure_permission_schema():
         db.session.execute(text('ALTER TABLE trees ADD COLUMN creator_id INTEGER'))
         db.session.commit()
 
+    if 'members' in table_names:
+        member_columns = {column['name'] for column in inspector.get_columns('members')}
+        changed = False
+        if 'is_notable' not in member_columns:
+            db.session.execute(text('ALTER TABLE members ADD COLUMN is_notable BOOLEAN DEFAULT 0 NOT NULL'))
+            changed = True
+        if 'achievements' not in member_columns:
+            db.session.execute(text("ALTER TABLE members ADD COLUMN achievements VARCHAR(512) DEFAULT ''"))
+            changed = True
+        if changed:
+            db.session.commit()
 
 with app.app_context():
     from wxcloudrun.model import Counters, User, Tree, Member, TreeCollaborator, CollaboratorInvite, MemberReport, MemberCorrection

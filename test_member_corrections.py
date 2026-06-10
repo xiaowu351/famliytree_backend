@@ -81,6 +81,48 @@ def main():
     assert member['birth_date'] == '1925'
     assert member['desc'] == 'old desc'
 
+    pending_after_resp = client.get(f'/api/trees/{tree_id}/corrections', headers=auth(owner_token))
+    assert pending_after_resp.status_code == 200, pending_after_resp.get_json()
+    pending_corrections = pending_after_resp.get_json()['data']['corrections']
+    assert not any(item['id'] == correction_id for item in pending_corrections), pending_corrections
+
+    approved_resp = client.get(
+        f'/api/trees/{tree_id}/corrections?status=approved',
+        headers=auth(owner_token)
+    )
+    assert approved_resp.status_code == 200, approved_resp.get_json()
+    approved_corrections = approved_resp.get_json()['data']['corrections']
+    approved_correction = next(item for item in approved_corrections if item['id'] == correction_id)
+    assert approved_correction['status'] == 'approved', approved_correction
+    assert approved_correction['handle_time'], approved_correction
+
+    reject_resp = client.post(
+        '/api/corrections',
+        json={
+            'tree_id': tree_id,
+            'member_id': member_id,
+            'proposed_desc': 'rejected desc',
+            'reason': 'not enough proof'
+        },
+        headers=auth(submitter_token)
+    )
+    assert reject_resp.status_code == 201, reject_resp.get_json()
+    reject_id = reject_resp.get_json()['data']['correction']['id']
+    reject_handle_resp = client.post(
+        f'/api/corrections/{reject_id}/handle',
+        json={'action': 'reject'},
+        headers=auth(owner_token)
+    )
+    assert reject_handle_resp.status_code == 200, reject_handle_resp.get_json()
+    rejected_resp = client.get(
+        f'/api/trees/{tree_id}/corrections?status=rejected',
+        headers=auth(owner_token)
+    )
+    assert rejected_resp.status_code == 200, rejected_resp.get_json()
+    rejected_corrections = rejected_resp.get_json()['data']['corrections']
+    rejected_correction = next(item for item in rejected_corrections if item['id'] == reject_id)
+    assert rejected_correction['status'] == 'rejected', rejected_correction
+
     repeat_resp = client.post(
         f'/api/corrections/{correction_id}/handle',
         json={'action': 'approve'},

@@ -189,9 +189,14 @@ def create_member_report():
 @login_required
 @permission_check(action='write')
 def get_member_reports(tree_id):
-    reports = MemberReport.query.filter_by(tree_id=tree_id, status='pending')\
-        .order_by(MemberReport.create_time.desc())\
-        .all()
+    status = request.args.get('status', 'pending')
+    if status not in ('pending', 'approved', 'rejected', 'all'):
+        return make_fail_response('status must be pending, approved, rejected or all.', 400)
+
+    query = MemberReport.query.filter_by(tree_id=tree_id)
+    if status != 'all':
+        query = query.filter_by(status=status)
+    reports = query.order_by(MemberReport.create_time.desc()).all()
 
     report_list = []
     for report in reports:
@@ -359,9 +364,14 @@ def create_member_correction():
 @login_required
 @permission_check(action='write')
 def get_member_corrections(tree_id):
-    corrections = MemberCorrection.query.filter_by(tree_id=tree_id, status='pending')\
-        .order_by(MemberCorrection.create_time.desc())\
-        .all()
+    status = request.args.get('status', 'pending')
+    if status not in ('pending', 'approved', 'rejected', 'all'):
+        return make_fail_response('status must be pending, approved, rejected or all.', 400)
+
+    query = MemberCorrection.query.filter_by(tree_id=tree_id)
+    if status != 'all':
+        query = query.filter_by(status=status)
+    corrections = query.order_by(MemberCorrection.create_time.desc()).all()
 
     result = []
     for correction in corrections:
@@ -480,6 +490,47 @@ def get_tree(tree_id):
 
     return make_success_response({'tree': tree_data, 'members': [member.to_dict() for member in members]}, '查询成功。')
 
+
+@app.route('/api/trees/<tree_id>/stats', methods=['GET'])
+@login_required
+def get_tree_stats(tree_id):
+    tree = get_tree_by_id(tree_id)
+    if not tree:
+        return make_fail_response('Tree not found.', 404)
+
+    members = dao_get_members(tree_id)
+    total_count = len(members)
+    male_count = len([item for item in members if item.gender == 'M'])
+    female_count = len([item for item in members if item.gender == 'F'])
+    generation_map = {}
+    for member in members:
+        generation = member.generation or 1
+        generation_map[generation] = generation_map.get(generation, 0) + 1
+
+    generation_distribution = [
+        {'generation': generation, 'count': count}
+        for generation, count in sorted(generation_map.items(), key=lambda item: item[0])
+    ]
+
+    return make_success_response({
+        'total_count': total_count,
+        'male_count': male_count,
+        'female_count': female_count,
+        'generation_distribution': generation_distribution
+    }, 'success')
+
+
+@app.route('/api/trees/<tree_id>/notables', methods=['GET'])
+@login_required
+def get_tree_notables(tree_id):
+    tree = get_tree_by_id(tree_id)
+    if not tree:
+        return make_fail_response('Tree not found.', 404)
+
+    members = Member.query.filter_by(tree_id=tree_id, is_notable=True)\
+        .order_by(Member.generation.asc(), Member.create_time.asc())\
+        .all()
+    return make_success_response({'members': [member.to_dict() for member in members]}, 'success')
 
 @app.route('/api/trees', methods=['POST'])
 @login_required
@@ -608,6 +659,8 @@ def create_member():
         spouse_type=payload.get('spouse_type', '配'),
         education_status=payload.get('education_status', '毕业'),
         adoption_type=payload.get('adoption_type', '生'),
+        is_notable=payload.get('is_notable', False),
+        achievements=payload.get('achievements', ''),
     )
 
     if spouse_id:
@@ -639,29 +692,32 @@ def update_member(member_id):
 
     payload = request.get_json(silent=True) or {}
     tree_id = member.tree_id
+    relation_update = 'parent_id' in payload or 'spouse_id' in payload
     parent_id = payload.get('parent_id', member.parent_id)
     spouse_id = payload.get('spouse_id', member.spouse_id)
-    ok, message = validate_member_relation(tree_id, parent_id, spouse_id, current_member_id=member_id)
-    if not ok:
-        return make_fail_response(message, 400)
 
-    if parent_id and has_parent_cycle(member_id, parent_id):
-        return make_fail_response('父节点关系会导致循环。', 400)
+    if relation_update:
+        ok, message = validate_member_relation(tree_id, parent_id, spouse_id, current_member_id=member_id)
+        if not ok:
+            return make_fail_response(message, 400)
 
-    if member.spouse_id and member.spouse_id != spouse_id:
-        clear_spouse_links(member)
+        if parent_id and has_parent_cycle(member_id, parent_id):
+            return make_fail_response('Parent relation would create a cycle.', 400)
 
-    if spouse_id:
-        spouse = get_member_by_id(spouse_id)
-        if spouse:
-            sync_spouse_link(member, spouse)
-        else:
-            return make_fail_response('指定配偶不存在。', 400)
+        if member.spouse_id and member.spouse_id != spouse_id:
+            clear_spouse_links(member)
 
+        if spouse_id:
+            spouse = get_member_by_id(spouse_id)
+            if spouse:
+                sync_spouse_link(member, spouse)
+            else:
+                return make_fail_response('Target spouse member does not exist.', 400)
     member.name = payload.get('name', member.name)
     member.gender = payload.get('gender', member.gender)
     member.is_alive = payload.get('is_alive', member.is_alive)
-    member.parent_id = parent_id
+    if relation_update:
+        member.parent_id = parent_id
     member.desc = payload.get('desc', member.desc)
     member.generation = payload.get('generation', member.generation)
     member.avatar_url = payload.get('avatar_url', member.avatar_url)
@@ -684,6 +740,8 @@ def update_member(member_id):
     member.spouse_type = payload.get('spouse_type', member.spouse_type)
     member.education_status = payload.get('education_status', member.education_status)
     member.adoption_type = payload.get('adoption_type', member.adoption_type)
+    member.is_notable = payload.get('is_notable', member.is_notable)
+    member.achievements = payload.get('achievements', member.achievements)
 
     member.desc = payload.get('desc', member.desc)
     db.session.commit()

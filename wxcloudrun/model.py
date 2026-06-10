@@ -164,6 +164,8 @@ class Member(db.Model):
     spouse_type = db.Column(db.String(64), default='配', nullable=True)
     education_status = db.Column(db.String(64), default='毕业', nullable=True)
     adoption_type = db.Column(db.String(64), default='生', nullable=True)
+    is_notable = db.Column(db.Boolean, default=False, nullable=False)
+    achievements = db.Column(db.String(512), default='', nullable=True)
 
     def to_dict(self):
         return {
@@ -197,7 +199,9 @@ class Member(db.Model):
             'is_spouse': self.is_spouse,
             'spouse_type': self.spouse_type or '',
             'education_status': self.education_status or '',
-            'adoption_type': self.adoption_type or ''
+            'adoption_type': self.adoption_type or '',
+            'is_notable': self.is_notable,
+            'achievements': self.achievements or ''
         }
 
 

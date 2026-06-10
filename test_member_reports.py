@@ -74,6 +74,49 @@ def main():
     assert member['name'] == 'Reported Child'
     assert member['parent_id'] == parent_id
 
+    pending_after_resp = client.get(f'/api/trees/{tree_id}/reports', headers=auth(owner_token))
+    assert pending_after_resp.status_code == 200, pending_after_resp.get_json()
+    pending_reports = pending_after_resp.get_json()['data']['reports']
+    assert not any(item['id'] == report_id for item in pending_reports), pending_reports
+
+    approved_resp = client.get(
+        f'/api/trees/{tree_id}/reports?status=approved',
+        headers=auth(owner_token)
+    )
+    assert approved_resp.status_code == 200, approved_resp.get_json()
+    approved_reports = approved_resp.get_json()['data']['reports']
+    approved_report = next(item for item in approved_reports if item['id'] == report_id)
+    assert approved_report['status'] == 'approved', approved_report
+    assert approved_report['handle_time'], approved_report
+
+    reject_resp = client.post(
+        '/api/reports',
+        json={
+            'tree_id': tree_id,
+            'parent_id': parent_id,
+            'relation_type': 'child',
+            'name': 'Rejected Child',
+            'gender': 'M',
+        },
+        headers=auth(submitter_token)
+    )
+    assert reject_resp.status_code == 201, reject_resp.get_json()
+    reject_id = reject_resp.get_json()['data']['report']['id']
+    reject_handle_resp = client.post(
+        f'/api/reports/{reject_id}/handle',
+        json={'action': 'reject'},
+        headers=auth(owner_token)
+    )
+    assert reject_handle_resp.status_code == 200, reject_handle_resp.get_json()
+    rejected_resp = client.get(
+        f'/api/trees/{tree_id}/reports?status=rejected',
+        headers=auth(owner_token)
+    )
+    assert rejected_resp.status_code == 200, rejected_resp.get_json()
+    rejected_reports = rejected_resp.get_json()['data']['reports']
+    rejected_report = next(item for item in rejected_reports if item['id'] == reject_id)
+    assert rejected_report['status'] == 'rejected', rejected_report
+
     repeat_resp = client.post(
         f'/api/reports/{report_id}/handle',
         json={'action': 'approve'},
