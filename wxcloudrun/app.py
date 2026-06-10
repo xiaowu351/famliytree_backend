@@ -99,7 +99,7 @@ def ensure_permission_schema():
 
 
 with app.app_context():
-    from wxcloudrun.model import Counters, User, Tree, Member, TreeCollaborator, CollaboratorInvite
+    from wxcloudrun.model import Counters, User, Tree, Member, TreeCollaborator, CollaboratorInvite, MemberReport, MemberCorrection
 
     try:
         db.create_all()

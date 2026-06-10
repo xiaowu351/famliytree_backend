@@ -28,7 +28,7 @@ from wxcloudrun.dao import (
     sync_spouse_link,
     validate_member_relation,
 )
-from wxcloudrun.model import Counters, Member, Tree, User, TreeCollaborator, CollaboratorInvite
+from wxcloudrun.model import Counters, Member, Tree, User, TreeCollaborator, CollaboratorInvite, MemberReport, MemberCorrection
 from wxcloudrun.response import make_fail_response, make_success_response
 from wxcloudrun.auth import generate_token, login_required, permission_check, get_current_user
 import uuid
@@ -127,6 +127,308 @@ def upload_avatar():
 @app.route('/uploads/avatars/<filename>', methods=['GET'])
 def serve_avatar(filename):
     return send_from_directory(AVATAR_UPLOAD_DIR, filename)
+
+
+@app.route('/api/reports', methods=['POST'])
+@login_required
+def create_member_report():
+    payload = request.get_json(silent=True) or {}
+    tree_id = payload.get('tree_id', '')
+    relation_type = payload.get('relation_type', '')
+    name = (payload.get('name') or '').strip()
+    gender = payload.get('gender')
+
+    if not tree_id or not name or not gender or not relation_type:
+        return make_fail_response('tree_id, name, gender and relation_type are required.', 400)
+    if relation_type not in ('child', 'spouse'):
+        return make_fail_response('relation_type must be child or spouse.', 400)
+
+    tree = get_tree_by_id(tree_id)
+    if not tree:
+        return make_fail_response('Tree not found.', 404)
+
+    parent_id = payload.get('parent_id', '') or ''
+    spouse_id = payload.get('spouse_id', '') or ''
+    if relation_type == 'child':
+        if not parent_id:
+            return make_fail_response('parent_id is required for child reports.', 400)
+        parent = get_member_by_id(parent_id)
+        if not parent or parent.tree_id != tree_id:
+            return make_fail_response('Target parent member is invalid.', 400)
+        spouse_id = ''
+
+    if relation_type == 'spouse':
+        if not spouse_id:
+            return make_fail_response('spouse_id is required for spouse reports.', 400)
+        spouse = get_member_by_id(spouse_id)
+        if not spouse or spouse.tree_id != tree_id:
+            return make_fail_response('Target spouse member is invalid.', 400)
+        if spouse.spouse_id:
+            return make_fail_response('Target member already has a spouse.', 400)
+        parent_id = ''
+
+    report = MemberReport(
+        tree_id=tree_id,
+        parent_id=parent_id,
+        spouse_id=spouse_id,
+        relation_type=relation_type,
+        name=name,
+        gender=gender,
+        is_alive=payload.get('is_alive', True),
+        birth_date=payload.get('birth_date', '') or '',
+        desc=payload.get('desc', '') or '',
+        status='pending',
+        submitter_id=g.current_user.id,
+    )
+    db.session.add(report)
+    db.session.commit()
+    return make_success_response({'report': report.to_dict()}, 'Report submitted.', 201)
+
+
+@app.route('/api/trees/<tree_id>/reports', methods=['GET'])
+@login_required
+@permission_check(action='write')
+def get_member_reports(tree_id):
+    reports = MemberReport.query.filter_by(tree_id=tree_id, status='pending')\
+        .order_by(MemberReport.create_time.desc())\
+        .all()
+
+    report_list = []
+    for report in reports:
+        item = report.to_dict()
+        submitter = User.query.get(report.submitter_id)
+        target_member = None
+        if report.relation_type == 'child' and report.parent_id:
+            target_member = get_member_by_id(report.parent_id)
+        elif report.relation_type == 'spouse' and report.spouse_id:
+            target_member = get_member_by_id(report.spouse_id)
+        item['submitter_name'] = submitter.nickname if submitter and submitter.nickname else 'Anonymous'
+        item['submitter_avatar'] = submitter.avatar_url if submitter and submitter.avatar_url else ''
+        item['target_name'] = target_member.name if target_member else ''
+        report_list.append(item)
+
+    return make_success_response({'reports': report_list}, 'success')
+
+
+@app.route('/api/reports/<int:report_id>/handle', methods=['POST'])
+@login_required
+def handle_member_report(report_id):
+    payload = request.get_json(silent=True) or {}
+    action = payload.get('action')
+    if action not in ('approve', 'reject'):
+        return make_fail_response('action must be approve or reject.', 400)
+
+    report = MemberReport.query.get(report_id)
+    if not report:
+        return make_fail_response('Report not found.', 404)
+
+    tree_id = report.tree_id
+    tree = get_tree_by_id(tree_id)
+    if not tree:
+        return make_fail_response('Tree not found.', 404)
+    if tree.creator_id != g.current_user.id:
+        collab = TreeCollaborator.query.filter_by(tree_id=tree_id, user_id=g.current_user.id).first()
+        if not collab:
+            return make_fail_response('No permission to handle reports for this tree.', 403)
+
+    if report.status != 'pending':
+        return make_fail_response('Report has already been handled.', 400)
+
+    if action == 'reject':
+        report.status = 'rejected'
+        report.handle_time = datetime.now()
+        db.session.commit()
+        return make_success_response({'report': report.to_dict()}, 'Report rejected.')
+
+    parent = None
+    spouse = None
+    if report.relation_type == 'child':
+        parent = get_member_by_id(report.parent_id)
+        if not parent or parent.tree_id != tree_id:
+            return make_fail_response('Target parent member is missing.', 400)
+    elif report.relation_type == 'spouse':
+        spouse = get_member_by_id(report.spouse_id)
+        if not spouse or spouse.tree_id != tree_id:
+            return make_fail_response('Target spouse member is missing.', 400)
+        if spouse.spouse_id:
+            return make_fail_response('Target member already has a spouse.', 400)
+
+    now = datetime.now().isoformat()
+    member = Member(
+        id=generate_id('member'),
+        tree_id=tree_id,
+        name=report.name,
+        gender=report.gender,
+        is_alive=report.is_alive,
+        parent_id=report.parent_id if report.relation_type == 'child' else '',
+        spouse_id='',
+        desc=report.desc or '',
+        create_time=now,
+        generation=(parent.generation + 1) if report.relation_type == 'child' and parent and parent.generation else 1,
+        birth_date=report.birth_date or '',
+        is_spouse=report.relation_type == 'spouse'
+    )
+
+    if report.relation_type == 'spouse':
+        sync_spouse_link(member, spouse)
+        member.generation = spouse.generation or 1
+
+    report.status = 'approved'
+    report.handle_time = datetime.now()
+    db.session.add(member)
+    db.session.add(report)
+    db.session.commit()
+    return make_success_response({'member': member.to_dict(), 'report': report.to_dict()}, 'Report approved.')
+
+
+CORRECTION_FIELDS = {
+    'name': ('proposed_name', 'Name'),
+    'gender': ('proposed_gender', 'Gender'),
+    'is_alive': ('proposed_is_alive', 'Alive status'),
+    'birth_date': ('proposed_birth_date', 'Birth date'),
+    'desc': ('proposed_desc', 'Biography'),
+}
+
+
+def _normalize_correction_value(value):
+    if isinstance(value, str):
+        return value.strip()
+    return value
+
+
+def _correction_changes(correction, member):
+    changes = []
+    for member_field, (correction_field, label) in CORRECTION_FIELDS.items():
+        proposed = getattr(correction, correction_field)
+        if proposed is None:
+            continue
+        if isinstance(proposed, str) and proposed == '':
+            continue
+        original = getattr(member, member_field)
+        if proposed != original:
+            changes.append({
+                'field': member_field,
+                'label': label,
+                'original': original,
+                'proposed': proposed,
+            })
+    return changes
+
+
+@app.route('/api/corrections', methods=['POST'])
+@login_required
+def create_member_correction():
+    payload = request.get_json(silent=True) or {}
+    member_id = payload.get('member_id', '')
+    reason = (payload.get('reason') or '').strip()
+
+    if not member_id or not reason:
+        return make_fail_response('member_id and reason are required.', 400)
+
+    member = get_member_by_id(member_id)
+    if not member:
+        return make_fail_response('Member not found.', 404)
+
+    tree_id = payload.get('tree_id') or member.tree_id
+    if tree_id != member.tree_id:
+        return make_fail_response('tree_id does not match member.', 400)
+
+    proposed_values = {}
+    for member_field, (correction_field, _label) in CORRECTION_FIELDS.items():
+        if correction_field in payload:
+            proposed_values[correction_field] = _normalize_correction_value(payload.get(correction_field))
+
+    correction = MemberCorrection(
+        tree_id=tree_id,
+        member_id=member_id,
+        reason=reason,
+        status='pending',
+        submitter_id=g.current_user.id,
+        **proposed_values
+    )
+
+    if not _correction_changes(correction, member):
+        return make_fail_response('At least one changed field is required.', 400)
+
+    db.session.add(correction)
+    db.session.commit()
+    return make_success_response({'correction': correction.to_dict()}, 'Correction submitted.', 201)
+
+
+@app.route('/api/trees/<tree_id>/corrections', methods=['GET'])
+@login_required
+@permission_check(action='write')
+def get_member_corrections(tree_id):
+    corrections = MemberCorrection.query.filter_by(tree_id=tree_id, status='pending')\
+        .order_by(MemberCorrection.create_time.desc())\
+        .all()
+
+    result = []
+    for correction in corrections:
+        member = get_member_by_id(correction.member_id)
+        if not member:
+            continue
+        submitter = User.query.get(correction.submitter_id)
+        item = correction.to_dict()
+        item['member_name'] = member.name
+        item['submitter_name'] = submitter.nickname if submitter and submitter.nickname else 'Anonymous'
+        item['changes'] = _correction_changes(correction, member)
+        result.append(item)
+
+    return make_success_response({'corrections': result}, 'success')
+
+
+@app.route('/api/corrections/<int:correction_id>/handle', methods=['POST'])
+@login_required
+def handle_member_correction(correction_id):
+    payload = request.get_json(silent=True) or {}
+    action = payload.get('action')
+    if action not in ('approve', 'reject'):
+        return make_fail_response('action must be approve or reject.', 400)
+
+    correction = MemberCorrection.query.get(correction_id)
+    if not correction:
+        return make_fail_response('Correction not found.', 404)
+
+    tree = get_tree_by_id(correction.tree_id)
+    if not tree:
+        return make_fail_response('Tree not found.', 404)
+
+    if tree.creator_id != g.current_user.id:
+        collab = TreeCollaborator.query.filter_by(tree_id=correction.tree_id, user_id=g.current_user.id).first()
+        if not collab:
+            return make_fail_response('No permission to handle corrections for this tree.', 403)
+
+    if correction.status != 'pending':
+        return make_fail_response('Correction has already been handled.', 400)
+
+    member = get_member_by_id(correction.member_id)
+    if not member:
+        return make_fail_response('Member not found.', 404)
+
+    if action == 'reject':
+        correction.status = 'rejected'
+        correction.handle_time = datetime.now()
+        db.session.commit()
+        return make_success_response({'correction': correction.to_dict()}, 'Correction rejected.')
+
+    changes = _correction_changes(correction, member)
+    if not changes:
+        return make_fail_response('No changed fields to apply.', 400)
+
+    for change in changes:
+        setattr(member, change['field'], change['proposed'])
+
+    correction.status = 'approved'
+    correction.handle_time = datetime.now()
+    db.session.add(member)
+    db.session.add(correction)
+    db.session.commit()
+    return make_success_response({
+        'member': member.to_dict(),
+        'correction': correction.to_dict(),
+        'changes': changes,
+    }, 'Correction approved.')
 
 
 @app.route('/api/trees', methods=['GET'])

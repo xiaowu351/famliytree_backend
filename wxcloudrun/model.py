@@ -61,6 +61,76 @@ class CollaboratorInvite(db.Model):
     expire_time = db.Column(db.DateTime, nullable=False)
 
 
+class MemberReport(db.Model):
+    __tablename__ = 'member_reports'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tree_id = db.Column(db.String(64), db.ForeignKey('trees.id'), nullable=False, index=True)
+    parent_id = db.Column(db.String(64), db.ForeignKey('members.id'), nullable=True)
+    spouse_id = db.Column(db.String(64), db.ForeignKey('members.id'), nullable=True)
+    relation_type = db.Column(db.String(20), nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    gender = db.Column(db.String(10), nullable=False)
+    is_alive = db.Column(db.Boolean, default=True, nullable=False)
+    birth_date = db.Column(db.String(64), default='', nullable=True)
+    desc = db.Column(db.Text, default='', nullable=True)
+    status = db.Column(db.String(20), default='pending', nullable=False, index=True)
+    submitter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    create_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    handle_time = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tree_id': self.tree_id,
+            'parent_id': self.parent_id or '',
+            'spouse_id': self.spouse_id or '',
+            'relation_type': self.relation_type,
+            'name': self.name,
+            'gender': self.gender,
+            'is_alive': self.is_alive,
+            'birth_date': self.birth_date or '',
+            'desc': self.desc or '',
+            'status': self.status,
+            'submitter_id': self.submitter_id,
+            'create_time': self.create_time.isoformat() if self.create_time else '',
+            'handle_time': self.handle_time.isoformat() if self.handle_time else '',
+        }
+
+
+class MemberCorrection(db.Model):
+    __tablename__ = 'member_corrections'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tree_id = db.Column(db.String(64), db.ForeignKey('trees.id'), nullable=False, index=True)
+    member_id = db.Column(db.String(64), db.ForeignKey('members.id'), nullable=False, index=True)
+    proposed_name = db.Column(db.String(64), nullable=True)
+    proposed_gender = db.Column(db.String(10), nullable=True)
+    proposed_is_alive = db.Column(db.Boolean, nullable=True)
+    proposed_birth_date = db.Column(db.String(64), nullable=True)
+    proposed_desc = db.Column(db.Text, nullable=True)
+    reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False, index=True)
+    submitter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    create_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    handle_time = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tree_id': self.tree_id,
+            'member_id': self.member_id,
+            'proposed_name': self.proposed_name,
+            'proposed_gender': self.proposed_gender,
+            'proposed_is_alive': self.proposed_is_alive,
+            'proposed_birth_date': self.proposed_birth_date,
+            'proposed_desc': self.proposed_desc,
+            'reason': self.reason,
+            'status': self.status,
+            'submitter_id': self.submitter_id,
+            'create_time': self.create_time.isoformat() if self.create_time else '',
+            'handle_time': self.handle_time.isoformat() if self.handle_time else '',
+        }
+
+
 class Member(db.Model):
     __tablename__ = 'members'
     id = db.Column(db.String(64), primary_key=True)
