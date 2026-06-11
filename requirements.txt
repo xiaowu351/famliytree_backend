@@ -7,5 +7,7 @@ Flask-Migrate==4.0.4
 SQLAlchemy==1.4.47
 PyMySQL==1.0.2
 PyJWT==2.8.0
+reportlab>=4.2.0,<5
+xhtml2pdf==0.2.17
 #cryptography==36.0.2
 # psycopg2-binary>=2.9.3

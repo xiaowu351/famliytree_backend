@@ -65,9 +65,13 @@ setup_logger(app)
 
 UPLOAD_ROOT = os.path.join(_this_dir, 'uploads')
 AVATAR_UPLOAD_DIR = os.path.join(UPLOAD_ROOT, 'avatars')
+BOOK_UPLOAD_DIR = os.path.join(UPLOAD_ROOT, 'books')
+ALBUM_UPLOAD_DIR = os.path.join(UPLOAD_ROOT, 'albums')
 ALLOWED_AVATAR_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
 MAX_AVATAR_SIZE = 2 * 1024 * 1024
 os.makedirs(AVATAR_UPLOAD_DIR, exist_ok=True)
+os.makedirs(BOOK_UPLOAD_DIR, exist_ok=True)
+os.makedirs(ALBUM_UPLOAD_DIR, exist_ok=True)
 
 
 def generate_id(prefix):
@@ -95,6 +99,11 @@ def ensure_permission_schema():
     if 'creator_id' not in tree_columns:
         db.session.execute(text('ALTER TABLE trees ADD COLUMN creator_id INTEGER'))
         db.session.commit()
+        tree_columns.add('creator_id')
+
+    if 'preface' not in tree_columns:
+        db.session.execute(text("ALTER TABLE trees ADD COLUMN preface TEXT NULL"))
+        db.session.commit()
 
     if 'members' in table_names:
         member_columns = {column['name'] for column in inspector.get_columns('members')}
@@ -102,14 +111,57 @@ def ensure_permission_schema():
         if 'is_notable' not in member_columns:
             db.session.execute(text('ALTER TABLE members ADD COLUMN is_notable BOOLEAN DEFAULT 0 NOT NULL'))
             changed = True
+        if 'notable_category' not in member_columns:
+            db.session.execute(text("ALTER TABLE members ADD COLUMN notable_category VARCHAR(32) DEFAULT 'elite'"))
+            changed = True
         if 'achievements' not in member_columns:
             db.session.execute(text("ALTER TABLE members ADD COLUMN achievements VARCHAR(512) DEFAULT ''"))
             changed = True
         if changed:
             db.session.commit()
 
+    if 'tree_announcements' in table_names:
+        announcement_columns = {column['name'] for column in inspector.get_columns('tree_announcements')}
+        changed = False
+        if 'category' not in announcement_columns:
+            db.session.execute(text("ALTER TABLE tree_announcements ADD COLUMN category VARCHAR(32) DEFAULT 'notice' NOT NULL"))
+            changed = True
+        if 'is_pinned' not in announcement_columns:
+            db.session.execute(text('ALTER TABLE tree_announcements ADD COLUMN is_pinned BOOLEAN DEFAULT 0 NOT NULL'))
+            changed = True
+        if changed:
+            db.session.commit()
+
+    if 'operation_logs' in table_names:
+        log_columns = {column['name'] for column in inspector.get_columns('operation_logs')}
+        if 'category' not in log_columns:
+            db.session.execute(text("ALTER TABLE operation_logs ADD COLUMN category VARCHAR(32) DEFAULT 'system' NOT NULL"))
+            db.session.commit()
+
 with app.app_context():
-    from wxcloudrun.model import Counters, User, Tree, Member, TreeCollaborator, CollaboratorInvite, MemberReport, MemberCorrection
+    from wxcloudrun.model import (
+        Counters,
+        User,
+        Tree,
+        Member,
+        TreeCollaborator,
+        CollaboratorInvite,
+        MemberReport,
+        MemberCorrection,
+        TreeAnnouncement,
+        AnnouncementLike,
+        AnnouncementComment,
+        AnnouncementShare,
+        TreeVisit,
+        OperationLog,
+        TreePrivacySetting,
+        GenealogyArticle,
+        VillageProfile,
+        FamilyAlbum,
+        FamilyPhoto,
+        AlbumSetting,
+        MemberBinding,
+    )
 
     try:
         db.create_all()
