@@ -48,109 +48,29 @@ INSERT INTO `members` (`id`, `tree_id`, `name`, `gender`, `is_alive`, `parent_id
 ('deng_czz_g86_f0e18e49', 'tree_deng_chengzizhen_001', '瓒', 'M', 1, 'deng_czz_g85_367b6a78', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 86, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g87_3b14e86a', 'tree_deng_chengzizhen_001', '发玙', 'M', 1, 'deng_czz_g86_f0e18e49', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 87, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g88_5b2488a3', 'tree_deng_chengzizhen_001', '敦让', 'M', 1, 'deng_czz_g87_3b14e86a', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 88, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g89_dunqing','tree_deng_chengzizhen_001','笃庆','M', 1,'deng_czz_g88_5b2488a3', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),89, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-('deng_czz_g90_xiangzhu','tree_deng_chengzizhen_001','祥翥','M', 1,'deng_czz_g89_dunqing', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),90, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g91_fengqi','tree_deng_chengzizhen_001','凤歧','M', 1,'deng_czz_g90_xiangzhu', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),91, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g92_weimou','tree_deng_chengzizhen_001','维谋','M', 1,'deng_czz_g91_fengqi', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),92, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g93_runfu','tree_deng_chengzizhen_001','润甫','M', 1,'deng_czz_g92_weimou', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),93, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g94_yuanzhen','tree_deng_chengzizhen_001','元镇','M', 1,'deng_czz_g93_runfu', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),94, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g95_zongguang','tree_deng_chengzizhen_001','宗光','M', 1,'deng_czz_g94_yuanzhen', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),95, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g96_deying','tree_deng_chengzizhen_001','德英','M', 1,'deng_czz_g95_zongguang', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),96, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g97_chaojun','tree_deng_chengzizhen_001','朝俊','M', 1,'deng_czz_g96_deying', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),97, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g98_chonglie','tree_deng_chengzizhen_001','崇烈','M', 1,'deng_czz_g97_chaojun', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),98, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g99_lin Gong','tree_deng_chengzizhen_001','林公','M', 1,'deng_czz_g98_chonglie', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),99, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g100_wen Gang','tree_deng_chengzizhen_001','文纲','M', 1,'deng_czz_g99_lin Gong', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),100, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g101_dan Gong','tree_deng_chengzizhen_001','旦公','M', 1,'deng_czz_g100_wen Gang', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),101, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g102_mengzu','tree_deng_chengzizhen_001','梦祖','M', 1,'deng_czz_g101_dan Gong', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),102, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g103_zigong','tree_deng_chengzizhen_001','咨公','M', 1,'deng_czz_g102_mengzu', '', '据《邓氏宗谱九江县城子镇》Word表格录入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'),103, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-
-('deng_czz_g104_d38559b4', 'tree_deng_chengzizhen_001', '翘琪', 'M', 1, 'deng_czz_g103_zigong', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 104, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g104_12faac03', 'tree_deng_chengzizhen_001', '翘瑞', 'M', 1, 'deng_czz_g103_zigong', '', 'OCR草稿录入，来源页：image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 104, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-('deng_czz_g105_zhanzhi', 'tree_deng_chengzizhen_001', '瞻植', 'M', 1, 'deng_czz_g104_d38559b4', '', 'OCR草稿录入，来源页：image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g105_zhanfei', 'tree_deng_chengzizhen_001', '瞻斐', 'M', 1, 'deng_czz_g104_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g105_zhantong', 'tree_deng_chengzizhen_001', '瞻通', 'M', 1, 'deng_czz_g104_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g105_zhanba', 'tree_deng_chengzizhen_001', '瞻拔', 'M', 1, 'deng_czz_g104_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g105_zhantao', 'tree_deng_chengzizhen_001', '瞻韬', 'M', 1, 'deng_czz_g104_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g105_zhankui', 'tree_deng_chengzizhen_001', '瞻魁', 'M', 1, 'deng_czz_g104_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-('deng_czz_g106_wanyu1', 'tree_deng_chengzizhen_001', '万瑜', 'M', 1, 'deng_czz_g105_zhankui', '', 'OCR草稿录入，来源页：image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g106_89681f49', 'tree_deng_chengzizhen_001', '万玉', 'M', 1, 'deng_czz_g105_zhankui', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-('deng_czz_g107_lifa', 'tree_deng_chengzizhen_001', '里法', 'M', 1, 'deng_czz_g106_wanyu1', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_liyuan', 'tree_deng_chengzizhen_001', '里源', 'M', 1, 'deng_czz_g106_wanyu1', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lihe', 'tree_deng_chengzizhen_001', '里河', 'M', 1, 'deng_czz_g106_wanyu1', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lihuai', 'tree_deng_chengzizhen_001', '里淮', 'M', 1, 'deng_czz_g106_wanyu1', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lijiang', 'tree_deng_chengzizhen_001', '里江', 'M', 1, 'deng_czz_g106_wanyu1', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lipu', 'tree_deng_chengzizhen_001', '里濮', 'M', 1, 'deng_czz_g106_wanyu1', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-
-('deng_czz_g108_guotai', 'tree_deng_chengzizhen_001', '国泰', 'M', 1, 'deng_czz_g107_lihe', '', 'OCR草稿录入，来源页：image16.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guomo', 'tree_deng_chengzizhen_001', '国模', 'M', 1, 'deng_czz_g107_lihe', '', 'OCR草稿录入，来源页：image16.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guoxian', 'tree_deng_chengzizhen_001', '国贤', 'M', 1, 'deng_czz_g107_lihe', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guoting', 'tree_deng_chengzizhen_001', '国廷', 'M', 1, 'deng_czz_g107_lihe', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guochao', 'tree_deng_chengzizhen_001', '国朝', 'M', 1, 'deng_czz_g107_lihe', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guoxun', 'tree_deng_chengzizhen_001', '国勋', 'M', 1, 'deng_czz_g107_lihe', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guolie', 'tree_deng_chengzizhen_001', '国烈', 'M', 1, 'deng_czz_g107_lihuai', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guoyan', 'tree_deng_chengzizhen_001', '国彦', 'M', 1, 'deng_czz_g107_lijiang', '', 'OCR草稿录入，来源页：image10.jpeg、请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guosheng', 'tree_deng_chengzizhen_001', '国盛', 'M', 1, 'deng_czz_g107_lijiang', '', 'OCR草稿录入，来源页：image9.jpeg。 请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guodong', 'tree_deng_chengzizhen_001', '国栋', 'M', 1, 'deng_czz_g107_lipu', '', 'OCR草稿录入，来源页：image9.jpeg。 请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-
-
-('deng_czz_g106_wanyuan', 'tree_deng_chengzizhen_001', '万远', 'M', 1, 'deng_czz_g105_zhantong', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g106_wanjian', 'tree_deng_chengzizhen_001', '万见', 'M', 1, 'deng_czz_g105_zhanfei', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g106_wandui', 'tree_deng_chengzizhen_001', '万对', 'M', 1, 'deng_czz_g105_zhanzhi', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g106_wanzhi', 'tree_deng_chengzizhen_001', '万智', 'M', 1, 'deng_czz_g105_zhanzhi', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g106_wanxiu', 'tree_deng_chengzizhen_001', '万秀', 'M', 1, 'deng_czz_g105_zhanzhi', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-
-('deng_czz_g107_limu', 'tree_deng_chengzizhen_001', '里沐', 'M', 1, 'deng_czz_g106_wanyuan', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lizhu', 'tree_deng_chengzizhen_001', '里渚', 'M', 1, 'deng_czz_g106_wanjian', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lishu', 'tree_deng_chengzizhen_001', '里淑', 'M', 1, 'deng_czz_g106_wanjian', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_liqi', 'tree_deng_chengzizhen_001', '里琪', 'M', 1, 'deng_czz_g106_wanjian', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lichong', 'tree_deng_chengzizhen_001', '里漴', 'M', 1, 'deng_czz_g106_wandui', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_liman', 'tree_deng_chengzizhen_001', '里满', 'M', 1, 'deng_czz_g106_wandui', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g107_lihuang', 'tree_deng_chengzizhen_001', '里璜', 'M', 1, 'deng_czz_g106_wanzhi', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-
-('deng_czz_g108_guohuang', 'tree_deng_chengzizhen_001', '国焕', 'M', 1, 'deng_czz_g107_limu', '', 'OCR草稿录入，来源页：image16.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guoguang', 'tree_deng_chengzizhen_001', '国光', 'M', 1, 'deng_czz_g107_limu', '', 'OCR草稿录入，来源页：image17.jpeg、image31.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guocan', 'tree_deng_chengzizhen_001', '国灿', 'M', 1, 'deng_czz_g107_limu', '', 'OCR草稿录入，来源页：image17.jpeg、image31.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓','', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guozhen', 'tree_deng_chengzizhen_001', '国振', 'M', 1, 'deng_czz_g107_lizhu', '', 'OCR草稿录入，来源页：image17.jpeg、image31.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-
-('deng_czz_g108_guoshi', 'tree_deng_chengzizhen_001', '国是', 'M', 1, 'deng_czz_g107_lizhu', '', 'OCR草稿录入，来源页：image17.jpeg、image31.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guoyi', 'tree_deng_chengzizhen_001', '国一', 'M', 1, 'deng_czz_g107_lizhu', '', 'OCR草稿录入，来源页：image17.jpeg、image31.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guofei', 'tree_deng_chengzizhen_001', '国飞', 'M', 1, 'deng_czz_g107_lishu', '', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guolong', 'tree_deng_chengzizhen_001', '国隆', 'M', 1, 'deng_czz_g107_liqi', '', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-('deng_czz_g108_guofu', 'tree_deng_chengzizhen_001', '国福', 'M', 1, 'deng_czz_g107_liman', '', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guolù', 'tree_deng_chengzizhen_001', '国禄', 'M', 1, 'deng_czz_g107_liman', '', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guoshou', 'tree_deng_chengzizhen_001', '国寿', 'M', 1, 'deng_czz_g107_liman', '', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108, '', '邓','', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-('deng_czz_g108_guosheng2', 'tree_deng_chengzizhen_001', '国升', 'M', 1,'deng_czz_g107_lihuang','', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 108,'','邓','', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
-
-
---- 以上整理好的OCR数据，以下是正在整理中的OCR草稿数据，后续会继续补充完善
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+('deng_czz_g102_d38559b4', 'tree_deng_chengzizhen_001', '翘琪', 'M', 1, '', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 102, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g102_12faac03', 'tree_deng_chengzizhen_001', '翘瑞', 'M', 1, '', '', 'OCR草稿录入，来源页：image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 102, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g103_9ed8aeba', 'tree_deng_chengzizhen_001', '瞻元', 'M', 1, 'deng_czz_g102_12faac03', '', 'OCR草稿录入，来源页：image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 103, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g103_29d1d781', 'tree_deng_chengzizhen_001', '瞻斐', 'M', 1, 'deng_czz_g102_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 103, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g103_8f299361', 'tree_deng_chengzizhen_001', '瞻植', 'M', 1, 'deng_czz_g102_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 103, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g103_e11a7898', 'tree_deng_chengzizhen_001', '瞻通', 'M', 1, 'deng_czz_g102_d38559b4', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 103, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g104_4a4b81d2', 'tree_deng_chengzizhen_001', '万元', 'M', 1, '', '', 'OCR草稿录入，来源页：image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 104, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g104_89681f49', 'tree_deng_chengzizhen_001', '万见', 'M', 1, 'deng_czz_g103_29d1d781', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 104, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g104_39cc4c45', 'tree_deng_chengzizhen_001', '万远', 'M', 1, 'deng_czz_g103_e11a7898', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 104, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g105_f3a977a7', 'tree_deng_chengzizhen_001', '里沐', 'M', 1, 'deng_czz_g104_39cc4c45', '', 'OCR草稿录入，来源页：image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g105_179bf17e', 'tree_deng_chengzizhen_001', '里流', 'M', 1, 'deng_czz_g104_4a4b81d2', '', 'OCR草稿录入，来源页：image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 105, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g106_2f0396a0', 'tree_deng_chengzizhen_001', '国佳', 'M', 1, '', '', 'OCR草稿录入，来源页：image35.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_cf9cca3a', 'tree_deng_chengzizhen_001', '国光', 'M', 1, '', '', 'OCR草稿录入，来源页：image17.jpeg、image31.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_b97b39b0', 'tree_deng_chengzizhen_001', '国勋', 'M', 1, '', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_3bc27e56', 'tree_deng_chengzizhen_001', '国升', 'M', 1, 'deng_czz_g105_179bf17e', '', 'OCR草稿录入，来源页：image31.jpeg、image6.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_6a600f96', 'tree_deng_chengzizhen_001', '国彦', 'M', 1, '', '', 'OCR草稿录入，来源页：image10.jpeg、image9.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_de20d24e', 'tree_deng_chengzizhen_001', '国是', 'M', 1, '', '', 'OCR草稿录入，来源页：image18.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g106_fee1d47e', 'tree_deng_chengzizhen_001', '国柱', 'M', 1, '', '', 'OCR草稿录入，来源页：image32.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_12af56b3', 'tree_deng_chengzizhen_001', '国泰咸鉴', 'M', 1, '', '', 'OCR草稿录入，来源页：image16.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_1c9d12a1', 'tree_deng_chengzizhen_001', '国焕', 'M', 1, 'deng_czz_g105_f3a977a7', '', 'OCR草稿录入，来源页：image16.jpeg、image4.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_b9aae580', 'tree_deng_chengzizhen_001', '国盛', 'M', 1, '', '', 'OCR草稿录入，来源页：image9.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_0efaaa92', 'tree_deng_chengzizhen_001', '国贤', 'M', 1, '', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
+('deng_czz_g106_5d0a48f9', 'tree_deng_chengzizhen_001', '国飞', 'M', 1, '', '', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g106_8321138f', 'tree_deng_chengzizhen_001', '国龙', 'M', 1, '', '', 'OCR草稿录入，来源页：image20.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 106, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g107_0ee1acca', 'tree_deng_chengzizhen_001', '咸义', 'M', 1, '', '', 'OCR草稿录入，来源页：image16.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g107_db892ca8', 'tree_deng_chengzizhen_001', '咸任', 'M', 1, 'deng_czz_g106_b97b39b0', '', 'OCR草稿录入，来源页：image12.jpeg。请人工核对原图后再正式导入。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 107, '', '邓', '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),

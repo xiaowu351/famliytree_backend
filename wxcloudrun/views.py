@@ -1,5 +1,6 @@
 import os
 import re
+from collections import deque
 from datetime import datetime, timedelta
 
 from flask import jsonify, request, send_from_directory, g
@@ -85,6 +86,42 @@ def _format_time(value):
     if isinstance(value, datetime):
         return value.isoformat()
     return str(value)
+
+
+def rebuild_tree_generations(tree_id):
+    """按 BFS 规则重构整棵家谱的世代编号。"""
+    root = Member.query.filter_by(tree_id=tree_id, parent_id='', is_spouse=False).order_by(Member.generation.asc()).first()
+    if not root:
+        root = Member.query.filter_by(tree_id=tree_id, parent_id=None, is_spouse=False).order_by(Member.generation.asc()).first()
+
+    if not root:
+        return False
+
+    queue = deque([root])
+    visited = set()
+
+    while queue:
+        current = queue.popleft()
+        if current.id in visited:
+            continue
+        visited.add(current.id)
+
+        children = Member.query.filter_by(parent_id=current.id, is_spouse=False).all()
+        for child in children:
+            expected_generation = (current.generation or 1) + 1
+            if child.generation != expected_generation:
+                child.generation = expected_generation
+                db.session.add(child)
+            queue.append(child)
+
+        spouses = Member.query.filter_by(spouse_id=current.id, is_spouse=True).all()
+        for spouse in spouses:
+            if spouse.generation != (current.generation or 1):
+                spouse.generation = current.generation or 1
+                db.session.add(spouse)
+
+    db.session.commit()
+    return True
 
 
 def _get_user_name(user_id, default='匿名用户'):
@@ -1997,6 +2034,37 @@ def update_member(member_id):
     _log_operation(tree_id, '编辑族员', member.name, category='member')
     db.session.commit()
     return make_success_response({'member': member.to_dict()}, '族员信息更新成功。')
+
+
+@app.route('/api/members/<member_id>/adjust_generation', methods=['POST'])
+@login_required
+@permission_check(action='write')
+def adjust_member_generation(member_id):
+    member = get_member_by_id(member_id)
+    if not member:
+        return make_fail_response('未找到指定族员。', 404)
+
+    payload = request.get_json(silent=True) or {}
+    new_generation = payload.get('generation', member.generation)
+    if not isinstance(new_generation, int):
+        try:
+            new_generation = int(new_generation)
+        except (TypeError, ValueError):
+            return make_fail_response('世代必须为纯数字。', 400)
+
+    if new_generation < 1:
+        return make_fail_response('世代必须从 1 开始。', 400)
+
+    member.generation = new_generation
+    db.session.add(member)
+    db.session.commit()
+
+    ok = rebuild_tree_generations(member.tree_id)
+    if not ok:
+        return make_fail_response('世代重构失败，请稍后重试。', 500)
+
+    _log_operation(member.tree_id, '调整世代', f'{member.name} -> {new_generation}', category='member')
+    return make_success_response({'generation': new_generation}, '世代调整并重构成功。')
 
 
 @app.route('/api/members/<member_id>', methods=['DELETE'])

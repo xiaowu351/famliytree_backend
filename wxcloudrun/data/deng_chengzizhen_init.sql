@@ -69,4 +69,7 @@ INSERT INTO `members` (
 ('deng_czz_g87_fayu', 'tree_deng_chengzizhen_001', '发玙', 'M', 1, 'deng_czz_g86_zan', '', '据《邓氏宗谱九江县城子镇》世系表录入。原表记为“之子 发玙”。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 87, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', ''),
 ('deng_czz_g88_dunrang', 'tree_deng_chengzizhen_001', '敦让', 'M', 1, 'deng_czz_g87_fayu', '', '据《邓氏宗谱九江县城子镇》世系表录入。表格未显示第 88 世编号，按第 87 世“发玙”下方“之子 敦让”推断为第 88 世。', DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s'), 88, '', '邓', '之子', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', '', '');
 
+('deng_czz_g89_dunqing','tree_deng_chengzizhen_001','笃庆','deng_czz_g88_dunrang',89);
+
+
 COMMIT;
