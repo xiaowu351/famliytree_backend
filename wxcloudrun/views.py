@@ -178,6 +178,35 @@ NOTABLE_CATEGORIES = [
 NOTABLE_CATEGORY_MAP = {item['key']: item['label'] for item in NOTABLE_CATEGORIES}
 
 
+def _bool_from_payload(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in ('1', 'true', 'yes', 'on')
+    return bool(value)
+
+
+def _normalize_notable_fields(payload, member=None):
+    current_is_notable = member.is_notable if member is not None else False
+    is_notable = _bool_from_payload(payload.get('is_notable'), current_is_notable)
+    notable_category = payload.get(
+        'notable_category',
+        member.notable_category if member is not None else 'elite'
+    ) or 'elite'
+    if notable_category not in NOTABLE_CATEGORY_MAP:
+        notable_category = 'elite'
+
+    current_achievements = member.achievements if member is not None else ''
+    achievements = (payload.get('achievements', current_achievements) or '').strip()[:512]
+    if not is_notable:
+        return False, 'elite', ''
+    if not achievements:
+        achievements = NOTABLE_CATEGORY_MAP.get(notable_category, '')
+    return True, notable_category, achievements
+
+
 def _get_or_create_privacy_setting(tree_id):
     setting = TreePrivacySetting.query.filter_by(tree_id=tree_id).first()
     if setting:
@@ -1100,8 +1129,6 @@ def update_tree_notable(tree_id):
     payload = request.get_json(silent=True) or {}
     member_id = payload.get('member_id')
     notable_category = payload.get('notable_category') or 'elite'
-    achievements = (payload.get('achievements') or '').strip()
-    is_notable = bool(payload.get('is_notable', True))
     if notable_category not in NOTABLE_CATEGORY_MAP:
         return make_fail_response('notable_category is invalid.', 400)
     if not member_id:
@@ -1111,12 +1138,10 @@ def update_tree_notable(tree_id):
     if not member or member.tree_id != tree_id:
         return make_fail_response('Member not found.', 404)
 
+    is_notable, notable_category, achievements = _normalize_notable_fields(payload, member)
     member.is_notable = is_notable
     member.notable_category = notable_category
-    if achievements:
-        member.achievements = achievements[:512]
-    elif is_notable and not member.achievements:
-        member.achievements = NOTABLE_CATEGORY_MAP[notable_category]
+    member.achievements = achievements
     db.session.add(member)
     action = '加入名人名录' if is_notable else '移出名人名录'
     detail = f'{member.name}：{NOTABLE_CATEGORY_MAP[notable_category]}'
@@ -1941,6 +1966,7 @@ def create_member():
     if has_parent_cycle(None, parent_id):
         return make_fail_response('父节点关系会导致循环。', 400)
 
+    is_notable, notable_category, achievements = _normalize_notable_fields(payload)
     member_id = generate_id('member')
     now = datetime.now().isoformat()
     member = Member(
@@ -1975,9 +2001,9 @@ def create_member():
         spouse_type=payload.get('spouse_type', '配'),
         education_status=payload.get('education_status', '毕业'),
         adoption_type=payload.get('adoption_type', '生'),
-        is_notable=payload.get('is_notable', False),
-        notable_category=payload.get('notable_category', 'elite'),
-        achievements=payload.get('achievements', ''),
+        is_notable=is_notable,
+        notable_category=notable_category,
+        achievements=achievements,
     )
 
     if spouse_id:
@@ -2058,9 +2084,11 @@ def update_member(member_id):
     member.spouse_type = payload.get('spouse_type', member.spouse_type)
     member.education_status = payload.get('education_status', member.education_status)
     member.adoption_type = payload.get('adoption_type', member.adoption_type)
-    member.is_notable = payload.get('is_notable', member.is_notable)
-    member.notable_category = payload.get('notable_category', member.notable_category)
-    member.achievements = payload.get('achievements', member.achievements)
+    if any(key in payload for key in ('is_notable', 'notable_category', 'achievements')):
+        is_notable, notable_category, achievements = _normalize_notable_fields(payload, member)
+        member.is_notable = is_notable
+        member.notable_category = notable_category
+        member.achievements = achievements
 
     member.desc = payload.get('desc', member.desc)
     _log_operation(tree_id, '编辑族员', member.name, category='member')
