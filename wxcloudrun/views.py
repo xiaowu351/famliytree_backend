@@ -572,7 +572,8 @@ def handle_member_report(report_id):
     tree = get_tree_by_id(tree_id)
     if not tree:
         return make_fail_response('Tree not found.', 404)
-    if tree.creator_id != g.current_user.id:
+    is_self_binding = binding.user_id == g.current_user.id
+    if tree.creator_id != g.current_user.id and not is_self_binding:
         collab = TreeCollaborator.query.filter_by(tree_id=tree_id, user_id=g.current_user.id).first()
         if not collab:
             return make_fail_response('No permission to handle reports for this tree.', 403)
@@ -950,6 +951,37 @@ def create_member_binding(tree_id):
     _log_operation(tree_id, '提交绑定申请', member.name, category='approval')
     db.session.commit()
     return make_success_response({'binding': _binding_to_view(binding)}, 'success', 201)
+
+
+@app.route('/api/trees/<tree_id>/my_binding', methods=['GET'])
+@login_required
+def get_my_member_binding(tree_id):
+    tree = get_tree_by_id(tree_id)
+    if not tree:
+        return make_fail_response('Tree not found.', 404)
+
+    member_id = request.args.get('member_id') or ''
+    member = get_member_by_id(member_id)
+    if not member or member.tree_id != tree_id:
+        return make_fail_response('Member not found.', 404)
+
+    binding = MemberBinding.query.filter(
+        MemberBinding.tree_id == tree_id,
+        MemberBinding.member_id == member_id,
+        MemberBinding.user_id == g.current_user.id,
+        MemberBinding.status.in_(('pending', 'approved'))
+    ).order_by(MemberBinding.create_time.desc()).first()
+
+    approved_binding = MemberBinding.query.filter_by(
+        tree_id=tree_id,
+        member_id=member_id,
+        status='approved'
+    ).order_by(MemberBinding.handle_time.desc(), MemberBinding.create_time.desc()).first()
+
+    return make_success_response({
+        'binding': _binding_to_view(binding) if binding else None,
+        'approved_binding': _binding_to_view(approved_binding) if approved_binding else None
+    }, 'success')
 
 
 @app.route('/api/bindings/<int:binding_id>/handle', methods=['POST'])
