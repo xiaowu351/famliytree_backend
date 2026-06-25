@@ -28,6 +28,94 @@ def group_members_by_generation(members):
     return grouped
 
 
+GENERATION_NAMES = ['始祖', '前一世', '元祖', '一世', '二世', '三世', '四世', '五世', '六世', '七世']
+
+
+def _compact_name(name, fallback='未名', limit=6):
+    return ''.join(str(name or fallback).split())[:limit]
+
+
+def _generation_label(generation):
+    try:
+        number = int(generation or 1)
+    except (TypeError, ValueError):
+        number = 1
+    if 1 <= number <= len(GENERATION_NAMES):
+        return GENERATION_NAMES[number - 1]
+    return f'{number}世'
+
+
+def build_preview_pages_payload(tree, members):
+    title = tree.title or (f'{tree.surname}氏宗谱' if tree.surname else '家族谱书')
+    main_members = [member for member in members if not member.is_spouse]
+    groups = [{
+        'generation': group['generation'],
+        'label': _generation_label(group['generation']),
+        'members': group['members'],
+    } for group in group_members_by_generation(members)]
+
+    lineage_groups = [{
+        'key': group['generation'],
+        'label': group['label'],
+        'names': [{'id': member.id, 'name': _compact_name(member.name)} for member in group['members'][:7]],
+    } for group in groups]
+
+    roots = groups[0]['members'] if groups else []
+    if not roots:
+        roots = [member for member in main_members if not member.parent_id]
+    root = roots[0] if roots else (main_members[0] if main_members else None)
+
+    children_map = {}
+    for member in main_members:
+        children_map.setdefault(member.parent_id or 'root', []).append(member)
+    for key in list(children_map.keys()):
+        children_map[key].sort(key=lambda item: (str(item.birth_order or ''), item.create_time or '', item.name or ''))
+
+    branch_base = (children_map.get(root.id, []) if root else []) or (groups[1]['members'][:5] if len(groups) > 1 else [])
+    main_line_members = ([root] if root else []) + branch_base[:2] + (groups[2]['members'][:1] if len(groups) > 2 else [])
+    main_line = [{'id': member.id, 'name': _compact_name(member.name)} for member in main_line_members if member]
+    branch_children = [{'id': member.id, 'name': _compact_name(member.name)} for member in branch_base[:5]]
+
+    member_by_id = {member.id: member for member in members}
+    spouses_by_member = {}
+    for member in members:
+        if member.is_spouse and member.spouse_id:
+            spouses_by_member.setdefault(member.spouse_id, []).append(member)
+
+    spread_groups = []
+    for group in groups[:7]:
+        spread_groups.append({
+            'key': group['generation'],
+            'label': group['label'],
+            'members': [{
+                'id': member.id,
+                'name': _compact_name(member.name),
+                'parent': _compact_name(member_by_id.get(member.parent_id).name, '', 6) if member.parent_id and member_by_id.get(member.parent_id) else '',
+                'spouse': _compact_name(spouses_by_member.get(member.id, [None])[0].name, '', 6) if spouses_by_member.get(member.id) else '',
+            } for member in group['members'][:8]]
+        })
+
+    line_members = [group['members'][0] for group in groups[1:6] if group['members']]
+    if not line_members:
+        line_members = [member for member in main_line_members if member]
+
+    pages = [
+        {'type': 'toc', 'catalogTitle': '全卷目录', 'title': title, 'sectionTitle': '全卷目录', 'sideText': '目录', 'lineageGroups': lineage_groups},
+        {'type': 'blank', 'catalogTitle': '空白衬页', 'title': title, 'sideText': ''},
+        {'type': 'index', 'catalogTitle': f'{title}检索表', 'title': title, 'sideText': f'{title}派下检索表', 'lineageGroups': lineage_groups},
+        {'type': 'tree', 'catalogTitle': f'{title}世系图', 'title': title, 'sideText': f'{title}派下前一至三世', 'tabs': lineage_groups[:5], 'mainLine': main_line, 'branchChildren': branch_children},
+        {'type': 'line', 'catalogTitle': f'{title}世系续图', 'title': title, 'sideText': f'{title}派下二至六世', 'tabs': lineage_groups[3:8], 'mainLine': [{'id': member.id, 'name': _compact_name(member.name)} for member in line_members if member]},
+        {'type': 'spread', 'catalogTitle': f'{title}派下世表', 'title': title, 'sideText': f'{title}派下前一至三世', 'spreadGroups': spread_groups[:5]},
+        {'type': 'spread', 'catalogTitle': f'{title}派下世表续', 'title': title, 'sideText': f'{title}派下三至七世', 'spreadGroups': spread_groups[2:7]},
+        {'type': 'blank', 'catalogTitle': '空白衬页', 'title': title, 'sideText': ''},
+    ]
+    for index, page in enumerate(pages):
+        page['pageNo'] = index + 1
+        page['pageNoText'] = f'〇{index + 1}'
+        page['sidePosition'] = 'left' if index + 1 in (1, 5, 7) else 'right'
+    return pages
+
+
 def build_book_payload(tree, members, preface='', style='ink'):
     style = 'royal' if style == 'royal' else 'ink'
     if style == 'royal':
@@ -66,6 +154,7 @@ def build_book_payload(tree, members, preface='', style='ink'):
         'member_count': len([member for member in members if not member.is_spouse]),
         'preface': preface or tree.preface or DEFAULT_PREFACE,
         'groups': groups,
+        'preview_pages': build_preview_pages_payload(tree, members),
         'style': style,
         'accent': accent,
         'deep': deep,
@@ -234,7 +323,209 @@ def _draw_frame(pdf, page_width, page_height, margin, accent, title='', page_no=
     pdf.setFillColorRGB(0, 0, 0)
 
 
+def _draw_vertical_text(pdf, text, x, y, font_name, font_size=11, line_gap=1.05, max_chars=None):
+    safe_text = str(text or '')
+    if max_chars:
+        safe_text = safe_text[:max_chars]
+    pdf.setFont(font_name, font_size)
+    cursor_y = y
+    for char in safe_text:
+        pdf.drawCentredString(x, cursor_y, char)
+        cursor_y -= font_size * line_gap
+
+
+def _draw_preview_shell(pdf, page, page_width, page_height, font_name):
+    from reportlab.lib import colors
+    pdf.setFillColor(colors.white)
+    pdf.rect(0, 0, page_width, page_height, fill=1, stroke=0)
+    pdf.saveState()
+    pdf.setFillColor(colors.HexColor('#A07D5A'))
+    try:
+        pdf.setFillAlpha(0.12)
+    except Exception:
+        pass
+    for row in range(4):
+        for col in range(3):
+            x = 78 + col * 170
+            y = page_height - 90 - row * 185
+            pdf.saveState()
+            pdf.translate(x, y)
+            pdf.rotate(-18)
+            pdf.setStrokeColor(colors.HexColor('#A07D5A'))
+            pdf.setLineWidth(1.2)
+            pdf.circle(0, 0, 16, stroke=1, fill=0)
+            pdf.setFont(font_name, 16)
+            pdf.drawCentredString(0, -5, '谱')
+            pdf.setFont(font_name, 15)
+            pdf.drawString(24, 2, '百家有谱')
+            pdf.setFont(font_name, 6)
+            pdf.drawString(25, -11, 'BAIJIA YOUPU')
+            pdf.restoreState()
+    try:
+        pdf.setFillAlpha(1)
+    except Exception:
+        pass
+    pdf.restoreState()
+    pdf.setStrokeColor(colors.black)
+    pdf.setLineWidth(1.4)
+    pdf.line(0, page_height - 8, page_width, page_height - 8)
+    pdf.line(0, 8, page_width, 8)
+    side_w = 38
+    is_left_side = page.get('sidePosition') == 'left'
+    pdf.setLineWidth(0.8)
+    if is_left_side:
+        pdf.line(side_w, 8, side_w, page_height - 8)
+        title_x = 18
+        ribbon_x = 0
+        side_text_x = 30
+        page_no_x = side_w + 8
+    else:
+        pdf.line(page_width - side_w, 8, page_width - side_w, page_height - 8)
+        title_x = page_width - 18
+        ribbon_x = page_width - side_w
+        side_text_x = page_width - 30
+        page_no_x = page_width - side_w - 8
+    _draw_vertical_text(pdf, page.get('title'), title_x, page_height - 26, font_name, 15, max_chars=14)
+    pdf.setFillColor(colors.black)
+    pdf.saveState()
+    pdf.skew(0, -14)
+    pdf.rect(ribbon_x, page_height - 122, side_w, 16, fill=1, stroke=0)
+    pdf.restoreState()
+    if page.get('sideText'):
+        _draw_vertical_text(pdf, page.get('sideText'), side_text_x, page_height - 145, font_name, 8, max_chars=18)
+    pdf.setFillColor(colors.HexColor('#777777'))
+    _draw_vertical_text(pdf, page.get('pageNoText'), page_no_x, 58, font_name, 8)
+    pdf.setFillColor(colors.black)
+
+
+def _draw_toc_page(pdf, page, page_width, page_height, font_name):
+    _draw_preview_shell(pdf, page, page_width, page_height, font_name)
+    _draw_vertical_text(pdf, page.get('sectionTitle'), page_width - 72, page_height - 60, font_name, 13, max_chars=8)
+    x = page_width - 120
+    for index, group in enumerate(page.get('lineageGroups') or []):
+        _draw_vertical_text(pdf, group.get('label'), x, page_height - 50, font_name, 8, max_chars=8)
+        pdf.setDash(1, 2)
+        pdf.line(x, page_height - 118, x, page_height - 245)
+        pdf.setDash()
+        _draw_vertical_text(pdf, f'{index + 2}页', x, page_height - 260, font_name, 7)
+        x -= 24
+        if x < 45:
+            break
+
+
+def _draw_black_vertical_tab(pdf, label, x, y, width, height, font_name):
+    from reportlab.lib import colors
+    pdf.saveState()
+    pdf.setFillColor(colors.black)
+    pdf.roundRect(x, y, width, height, 4, stroke=0, fill=1)
+    pdf.setStrokeColor(colors.HexColor('#777777'))
+    pdf.roundRect(x + 1, y + 1, width - 2, height - 2, 3, stroke=1, fill=0)
+    pdf.setFillColor(colors.white)
+    _draw_vertical_text(pdf, label, x + width / 2, y + height - 10, font_name, 7, max_chars=6)
+    pdf.restoreState()
+
+
+def _draw_index_page(pdf, page, page_width, page_height, font_name):
+    _draw_preview_shell(pdf, page, page_width, page_height, font_name)
+    for x in (170, 300, 430):
+        pdf.line(x, 34, x, page_height - 28)
+    y = page_height - 42
+    for index, group in enumerate(page.get('lineageGroups') or []):
+        x = page_width - 105
+        _draw_black_vertical_tab(pdf, group.get('label'), x - 12, y - 42, 26, 48, font_name)
+        name_x = x - 28
+        for person in group.get('names') or []:
+            _draw_vertical_text(pdf, person.get('name'), name_x, y, font_name, 8, max_chars=6)
+            name_x -= 16
+        _draw_vertical_text(pdf, f'{index + 2}页', name_x - 8, y, font_name, 7)
+        y -= 48
+        if y < 50:
+            break
+
+
+def _draw_lineage_page(pdf, page, page_width, page_height, font_name):
+    _draw_preview_shell(pdf, page, page_width, page_height, font_name)
+    x = page_width / 2 - 26
+    y = page_height - 70
+    people = page.get('mainLine') or []
+    for index, person in enumerate(people):
+        _draw_vertical_text(pdf, person.get('name'), x, y, font_name, 12, max_chars=6)
+        pdf.circle(x, y - 44, 4, stroke=1, fill=0)
+        if index < len(people) - 1:
+            pdf.line(x, y - 50, x, y - 96)
+        y -= 92
+    children = page.get('branchChildren') or []
+    if children:
+        base_y = max(70, y + 30)
+        start_x = x - (len(children) - 1) * 20
+        pdf.line(start_x - 12, base_y + 18, start_x + len(children) * 40 - 28, base_y + 18)
+        for index, child in enumerate(children):
+            cx = start_x + index * 40
+            pdf.line(cx, base_y + 18, cx, base_y + 6)
+            _draw_vertical_text(pdf, child.get('name'), cx, base_y, font_name, 9, max_chars=5)
+    tx = page_width - 78
+    for tab in page.get('tabs') or []:
+        _draw_black_vertical_tab(pdf, tab.get('label'), tx - 11, page_height - 96, 22, 60, font_name)
+        tx -= 28
+        if tx < 60:
+            break
+
+
+def _draw_spread_page(pdf, page, page_width, page_height, font_name):
+    _draw_preview_shell(pdf, page, page_width, page_height, font_name)
+    row_h = (page_height - 40) / 5
+    y_top = page_height - 24
+    for index, group in enumerate(page.get('spreadGroups') or []):
+        y = y_top - index * row_h
+        if index:
+            pdf.line(12, y, page_width - 40, y)
+        x = page_width - 96
+        for person in group.get('members') or []:
+            text_parts = []
+            if person.get('parent'):
+                text_parts.append(f"生子{person.get('parent')}")
+            text_parts.append(person.get('name') or '')
+            if person.get('spouse'):
+                text_parts.append(f"配{person.get('spouse')}")
+            _draw_vertical_text(pdf, ''.join(text_parts), x, y - 18, font_name, 8, max_chars=13)
+            x -= 26
+            if x < 40:
+                break
+        _draw_black_vertical_tab(pdf, group.get('label'), page_width - 70, y - 72, 24, 58, font_name)
+
+
+def render_preview_reportlab_pdf(output_path, payload):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    pages = payload.get('preview_pages') or []
+    if not pages:
+        return False
+    font_name = _reportlab_font_name()
+    page_width, page_height = A4
+    pdf = canvas.Canvas(output_path, pagesize=A4)
+    pdf.setTitle(payload.get('title') or '家族谱书')
+    for page in pages:
+        page_type = page.get('type')
+        if page_type == 'toc':
+            _draw_toc_page(pdf, page, page_width, page_height, font_name)
+        elif page_type == 'index':
+            _draw_index_page(pdf, page, page_width, page_height, font_name)
+        elif page_type in ('tree', 'line'):
+            _draw_lineage_page(pdf, page, page_width, page_height, font_name)
+        elif page_type == 'spread':
+            _draw_spread_page(pdf, page, page_width, page_height, font_name)
+        else:
+            _draw_preview_shell(pdf, page, page_width, page_height, font_name)
+        pdf.showPage()
+    pdf.save()
+    return True
+
+
 def render_reportlab_pdf(output_path, payload):
+    if render_preview_reportlab_pdf(output_path, payload):
+        return
+
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import mm

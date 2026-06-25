@@ -3,8 +3,11 @@
 # 已知alpine镜像与pytorch有兼容性问题会导致构建失败，如需使用pytorch请务必按需更换基础镜像。
 FROM alpine:3.13
 
+# 1. 在 pip 运行前，先安装编译 C 语言所需的系统依赖
+RUN apk add --no-cache gcc musl-dev libffi-dev python3-dev
+
 # 容器默认时区为UTC，如需使用上海时间请启用以下时区设置命令
-# RUN apk add tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai > /etc/timezone
+RUN apk add tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai > /etc/timezone
 
 # 使用 HTTPS 协议访问容器云调用证书安装
 RUN apk add ca-certificates

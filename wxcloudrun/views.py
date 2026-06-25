@@ -1778,13 +1778,16 @@ def compile_genealogy_book(tree_id):
     db.session.commit()
 
     download_path = f'/uploads/books/{filename}'
+    page_count = len(book_payload.get('preview_pages') or [])
+    member_count = len([member for member in members if not member.is_spouse])
     return make_success_response({
         'tree_id': tree_id,
         'filename': filename,
         'download_url': _public_url(download_path),
         'download_path': download_path,
         'engine': engine,
-        'member_count': len(members)
+        'member_count': member_count,
+        'page_count': page_count
     }, 'success')
 
 
