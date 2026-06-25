@@ -1,7 +1,7 @@
 import os
 
 # 是否开启debug模式
-DEBUG = os.environ.get("DEBUG",True)
+DEBUG = os.environ.get("DEBUG",False)
 
 
 # 数据库连接 URI 构建
